@@ -1,0 +1,372 @@
+{
+    "info": {
+        "name": "Blog Backend Commerce API",
+        "description": "Complete Postman collection for cart, orders, payments, and admin commerce endpoints.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000/api/v1"
+        },
+        {
+            "key": "email",
+            "value": "admin@blog.com"
+        },
+        {
+            "key": "password",
+            "value": "Admin@123456"
+        },
+        {
+            "key": "token",
+            "value": ""
+        },
+        {
+            "key": "userId",
+            "value": "1"
+        },
+        {
+            "key": "sessionToken",
+            "value": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        {
+            "key": "courseId",
+            "value": "1"
+        },
+        {
+            "key": "orderId",
+            "value": "1"
+        },
+        {
+            "key": "discountCodeId",
+            "value": "1"
+        }
+    ],
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Register",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/auth/register",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"first_name\": \"System\",\n  \"last_name\": \"Admin\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "if (json.accessToken) { pm.collectionVariables.set('token', json.accessToken); }"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/auth/login",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Cart",
+            "item": [
+                {
+                    "name": "Get Cart",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/cart?user_id={{userId}}&session_token={{sessionToken}}"
+                    }
+                },
+                {
+                    "name": "Add Cart Item",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/cart/items",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"course_id\": {{courseId}},\n  \"user_id\": {{userId}},\n  \"session_token\": \"{{sessionToken}}\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Remove Cart Item",
+                    "request": {
+                        "method": "DELETE",
+                        "url": "{{baseUrl}}/cart/items/{{courseId}}?user_id={{userId}}&session_token={{sessionToken}}"
+                    }
+                },
+                {
+                    "name": "Apply Discount",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/cart/apply-discount",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"SUMMER20\",\n  \"user_id\": {{userId}},\n  \"session_token\": \"{{sessionToken}}\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Checkout",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "if (json.order && json.order.id) { pm.collectionVariables.set('orderId', String(json.order.id)); }"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/cart/checkout",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"user_id\": {{userId}},\n  \"session_token\": \"{{sessionToken}}\",\n  \"customer_email\": \"{{email}}\",\n  \"customer_phone_number\": \"+989120000001\",\n  \"payment_gateway\": \"zarinpal\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Orders",
+            "item": [
+                {
+                    "name": "List Orders",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/orders?user_id={{userId}}&page=1&limit=10"
+                    }
+                },
+                {
+                    "name": "Get Order",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/orders/{{orderId}}?user_id={{userId}}"
+                    }
+                },
+                {
+                    "name": "Retry Payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/orders/{{orderId}}/retry-payment",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"user_id\": {{userId}},\n  \"gateway\": \"zarinpal\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Payments",
+            "item": [
+                {
+                    "name": "Simulate Zarinpal Callback Success",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/payments/callback/zarinpal?orderId={{orderId}}&Authority=test-authority&Status=OK"
+                    }
+                },
+                {
+                    "name": "Simulate Zarinpal Callback Failed",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/payments/callback/zarinpal?orderId={{orderId}}&Authority=test-authority&Status=NOK"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin Discount Codes",
+            "item": [
+                {
+                    "name": "List Discount Codes",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/admin/discount-codes"
+                    }
+                },
+                {
+                    "name": "Get Discount Code",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/admin/discount-codes/{{discountCodeId}}"
+                    }
+                },
+                {
+                    "name": "Create Discount Code",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "if (json.id) { pm.collectionVariables.set('discountCodeId', String(json.id)); }"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/admin/discount-codes",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"code\": \"SUMMER20\",\n  \"title\": \"Summer Campaign\",\n  \"type\": \"percentage\",\n  \"scope\": \"entire_cart\",\n  \"value\": 20,\n  \"max_total_usage\": 100,\n  \"max_usage_per_user\": 1,\n  \"is_active\": true,\n  \"allow_on_discounted_courses\": false\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Update Discount Code",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/admin/discount-codes/{{discountCodeId}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"is_active\": false\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin Orders",
+            "item": [
+                {
+                    "name": "List Orders",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/admin/orders?page=1&limit=20"
+                    }
+                },
+                {
+                    "name": "Get Order",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/admin/orders/{{orderId}}"
+                    }
+                },
+                {
+                    "name": "Update Order Status",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{baseUrl}}/admin/orders/{{orderId}}/status",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"cancelled\",\n  \"payment_status\": \"failed\",\n  \"notes\": \"Cancelled by admin for testing\"\n}"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
