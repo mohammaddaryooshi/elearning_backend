@@ -16,6 +16,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { RolesModule } from './modules/roles/roles.module';
 import { CartsModule } from './modules/carts/carts.module';
 import { MailModule } from '@modules/mail/mail.module';
+import { SmsModule } from '@modules/sms/sms.module';
 
 @Module({
   imports: [
@@ -43,7 +44,8 @@ import { MailModule } from '@modules/mail/mail.module';
     NotificationsModule,
     RolesModule,
     CartsModule,
-    MailModule
+    MailModule,
+    SmsModule,
   ],
   controllers: [AppController],
   providers: [

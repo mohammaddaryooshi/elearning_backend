@@ -27,6 +27,7 @@ import {
 } from '@constants/app.constants';
 import { BadRequestException } from '../common/exceptions/app.exception';
 import { MailService } from '@modules/mail/mail.service';
+import { FarazSmsService } from '@modules/sms/faraz-sms.service';
 
 @Injectable()
 export class AuthService {
@@ -42,6 +43,7 @@ export class AuthService {
         @InjectRepository(AuthSessionEntity)
         private readonly sessionRepository: Repository<AuthSessionEntity>,
         private readonly mailService: MailService,
+        private readonly farazSmsService: FarazSmsService,
     ) { }
 
     async requestOtp(dto: RequestOtpDto, request: Request, response: Response) {
@@ -469,40 +471,7 @@ export class AuthService {
             return;
         }
 
-        await this.sendSmsOtp(identifier, otp);
-    }
-
-
-
-    private async sendSmsOtp(phone: string, otp: string): Promise<void> {
-        const apiUrl = process.env.FARAZSMS_API_URL;
-        const username = process.env.FARAZSMS_USERNAME;
-        const password = process.env.FARAZSMS_PASSWORD;
-        const sender = process.env.FARAZSMS_SENDER || process.env.FARAZSMS_LINE_NUMBER;
-
-        if (!apiUrl || !username || !password || !sender) {
-            if (process.env.NODE_ENV === 'production') {
-                throw new Error('FarazSMS provider is not configured');
-            }
-            this.logger.warn(`[DEV] OTP SMS delivery simulated for ${phone}`);
-            return;
-        }
-
-        const res = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username,
-                password,
-                from: sender,
-                to: phone,
-                text: `کد تایید شما: ${otp}`,
-            }),
-        });
-
-        if (!res.ok) {
-            throw new Error(`FarazSMS API responded with status ${res.status}`);
-        }
+        await this.farazSmsService.sendOtp(identifier, otp);
     }
 
     // ─── JWT Helpers ─────────────────────────────────────────────────────────────

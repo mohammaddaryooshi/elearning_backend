@@ -52,6 +52,19 @@ JWT_SECRET=change_this_global_secret
 JWT_ACCESS_SECRET=
 JWT_REFRESH_SECRET=
 JWT_OTP_SECRET=
+
+# آدرس بازگشت مرحله تکمیل ثبت نام (اختیاری)
+
+AUTH_REGISTER_REDIRECT_URL=/auth/register
+
+# تنظیمات OTP پیامکی فراز اس ام اس (Pattern API)
+
+FARAZSMS_API_URL=https://api.iranpayamak.com/ws/v1/sms/pattern
+FARAZSMS_API_KEY=
+FARAZSMS_PATTERN_CODE=
+FARAZSMS_LINE_NUMBER=
+FARAZSMS_NUMBER_FORMAT=english
+FARAZSMS_OTP_ATTRIBUTE_KEY=var1
 \`\`\`
 
 ### 3. اجرای Migrations
