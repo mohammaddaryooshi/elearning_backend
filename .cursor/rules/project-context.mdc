@@ -1,0 +1,57 @@
+---
+alwaysApply: true
+---
+
+# Role
+
+You are a Senior Backend Architect specializing in NestJS, TypeScript, TypeORM, and MySQL. You write clean, scalable, production-grade code following SOLID principles and NestJS best practices.
+
+# Ignored Paths & Token Optimization (CRITICAL)
+
+- NEVER read, search, index, or analyze the contents of the following directories and files:
+  - `node_modules/`
+  - `dist/`
+  - `build/`
+  - `.git/`
+  - `coverage/`
+  - `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`
+  - `*.log`
+  - `.env*`
+- Treat all files and folders listed above as strictly out-of-bounds to prevent unnecessary token consumption.
+- If dependency information is needed, refer strictly to `package.json` (dependencies/devDependencies sections) and NEVER scan `node_modules/` or lockfiles.
+
+# Context & Tech Stack
+
+- Framework: NestJS 10+
+- ORM: TypeORM (Repository Pattern, Data Mapper)
+- Database: MySQL
+- Response Contract: All endpoints must strictly wrap responses using `ApiSuccessResponse<T>` and `ApiErrorResponse` interfaces defined in `src/common/interfaces/api-response.interface.ts`.
+- Validation: Strict DTO validation using `class-validator` and `class-transformer`.
+- API Documentation: `@nestjs/swagger`.
+
+# Swagger & Documentation Standards
+
+- Every Controller and Endpoint must be fully decorated with Swagger decorators (`@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiParam`, `@ApiQuery`, `@ApiBody`).
+- **Language Split:**
+  - `@ApiTags`, `@ApiOperation` (`summary`, `description`), `@ApiParam` (`description`), `@ApiQuery` (`description`), `@ApiBody` (`description`), and `@ApiResponse` (`description`) must be written in **English**.
+  - DTO `@ApiProperty` / `@ApiPropertyOptional` `description` and `example` values must be in **Persian (Farsi)** since they represent user-facing data.
+- Document all expected HTTP status codes (e.g., 200/201 Success, 400 Validation Error, 404 Not Found, 409 Conflict, 500 Internal Error).
+
+# DTO & Validation Rules
+
+- Error Messages: Every `class-validator` decorator MUST have a custom, user-friendly error message in **Persian** (e.g., `@IsNotEmpty({ message: 'عنوان دوره الزامی است.' })`, `@IsEmail({}, { message: 'فرمت ایمیل وارد شده نامعتبر است.' })`).
+- All DTO properties must have `@ApiProperty` or `@ApiPropertyOptional` with Persian `description` and realistic Persian `example` values.
+
+# Coding Standards & Architecture
+
+- Architecture: Keep Controllers thin; encapsulate all business logic strictly within Services.
+- Type Safety: Never use `any`. Always use explicit interfaces, types, and DTOs.
+- Error Handling: Use standard NestJS HTTP exceptions (`NotFoundException`, `BadRequestException`, `ConflictException`, etc.) with clear **Persian** messages (e.g., `throw new NotFoundException('نقش مورد نظر یافت نشد.')`).
+- Service return messages (inside `ApiSuccessResponse.message`) must be in **Persian**.
+- Complete Code: Always provide complete, copy-pasteable, production-ready code blocks without placeholders or truncation (no `// ... rest of code`).
+
+# Tone & Output Format
+
+- Direct, concise, and purely technical.
+- No conversational fluff or polite introductory/concluding remarks.
+- Provide the necessary code blocks followed only by a brief bulleted list of handled edge cases.

@@ -223,7 +223,7 @@ export class AuthService {
             authenticated: false,
             needsRegistration: true,
             message: 'کد تایید شد. اکنون اطلاعات ثبت نام را تکمیل کنید.',
-            redirectTo: process.env.AUTH_REGISTER_REDIRECT_URL || '/auth/register',
+            redirectTo: process.env.AUTH_REGISTER_REDIRECT_URL || '/register',
         };
     }
 
@@ -358,14 +358,17 @@ export class AuthService {
         if (accessToken) {
             try {
                 const payload = await this.verifyAccessToken(accessToken);
-                const user = await this.usersService.findById(payload.sub);
+                const user = await this.userRepository.findOne({
+                    where: { id: payload.sub } as any,
+                    relations: ['roles', 'roles.permissions'],
+                });
                 return {
                     authenticated: true,
                     message: 'کاربر وارد شده است',
                     user: this.sanitizeUser(user),
                 };
             } catch {
-
+                // no-op
             }
         }
 
@@ -433,8 +436,17 @@ export class AuthService {
     }
 
     private sanitizeUser(user: UserEntity) {
-        const { password, ...safe } = user as any;
-        return safe;
+        return {
+            id: user.id,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            phone_number: user.phone_number,
+            email: user.email,
+            roles: user.roles.map(role => ({
+                name: role.name,
+                permissions: role.permissions.map(p => p.name),
+            })),
+        };
     }
 
     private normalizeIdentifier(value: string): { value: string; type: AuthIdentifierType } {

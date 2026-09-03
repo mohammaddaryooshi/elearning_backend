@@ -61,14 +61,13 @@ export class AdminSeeder extends BaseSeeder {
         });
 
         if (!user) {
-            const hashedPassword = await bcrypt.hash(defaultPassword, 10);
             user = await this.userRepository.save(
                 this.userRepository.create({
                     first_name: 'System',
                     last_name: 'Admin',
                     phone_number: process.env.ADMIN_SEED_PHONE || '+989120000001',
                     email: defaultEmail,
-                    password: hashedPassword,
+
                 }),
             );
 

@@ -29,7 +29,6 @@ export class UserEntitySeeder extends BaseSeeder {
                     first_name: row.first_name,
                     last_name: row.last_name,
                     phone_number: row.phone_number,
-                    password,
                     roles: [role],
                 }));
                 continue;

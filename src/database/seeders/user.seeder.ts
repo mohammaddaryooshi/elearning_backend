@@ -12,7 +12,7 @@ export class UserSeeder extends BaseSeeder {
     }
 
     async run(): Promise<void> {
-        const hashedPassword = await bcrypt.hash('password123', 10);
+
 
         const users = [
             {
@@ -20,28 +20,24 @@ export class UserSeeder extends BaseSeeder {
                 last_name: 'احمدی',
                 phone_number: '+989121234567',
                 email: 'admin@blog.com',
-                password: hashedPassword,
             },
             {
                 first_name: 'فاطمه',
                 last_name: 'رضایی',
                 phone_number: '+989137654321',
                 email: 'teacher@blog.com',
-                password: hashedPassword,
             },
             {
                 first_name: 'محمد',
                 last_name: 'کریمی',
                 phone_number: '+989151112233',
                 email: 'student1@blog.com',
-                password: hashedPassword,
             },
             {
                 first_name: 'زهرا',
                 last_name: 'موسوی',
                 phone_number: '+989169998877',
                 email: 'student2@blog.com',
-                password: hashedPassword,
             },
         ];
 

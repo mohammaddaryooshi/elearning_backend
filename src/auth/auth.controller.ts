@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
@@ -60,6 +61,7 @@ export class AuthController {
   }
 
   @Public()
+  @SkipThrottle()
   @Get('session')
   @ApiOperation({ summary: 'Check current authentication session' })
   async session(@Req() request: Request, @Res({ passthrough: true }) response: Response) {

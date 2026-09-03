@@ -4,6 +4,8 @@ import { AppModule } from './app.module';
 import { setupSwagger } from './config/swagger.config';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import helmet from 'helmet';
+import { ApiExceptionFilter } from './common/exceptions/api-exception.filter';
+import { ApiSuccessInterceptor } from './common/interceptors/api-success.interceptor';
 const cookieParser = require('cookie-parser');
 
 
@@ -20,7 +22,9 @@ async function bootstrap() {
   app.use(helmet());
 
   // ── CORS (OWASP: Broken Access Control) ──────────────────────────────────
-  const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000')
+  const allowedOrigins = (
+    process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:3001'
+  )
     .split(',')
     .map((o) => o.trim());
 
@@ -36,6 +40,12 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
+
+  // Global exception filter — must be before interceptor
+  app.useGlobalFilters(new ApiExceptionFilter());
+
+  // Global success interceptor
+  app.useGlobalInterceptors(new ApiSuccessInterceptor());
 
   // ── Global Validation (OWASP: Injection / Input Validation) ───────────────
   app.useGlobalPipes(

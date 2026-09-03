@@ -39,7 +39,6 @@ export class UsersService extends BaseService<UserEntity> {
             throw new ConflictException('این ایمیل قبلا ثبت شده است');
         }
 
-        const hashed = await bcrypt.hash(dto.password, 12);
         const roleName = dto.role || USER_CONSTANTS.DEFAULT_ROLE;
         const role = await this.roleRepository.findOne({ where: { name: roleName } });
 
@@ -49,7 +48,6 @@ export class UsersService extends BaseService<UserEntity> {
 
         return super.create({
             ...dto,
-            password: hashed,
             roles: [role],
         } as DeepPartial<UserEntity>);
     }
@@ -64,9 +62,7 @@ export class UsersService extends BaseService<UserEntity> {
 
         const data: DeepPartial<UserEntity> = { ...dto } as any;
 
-        if (dto.password) {
-            data.password = await bcrypt.hash(dto.password, 12);
-        }
+
 
         return super.update(id, data);
     }

@@ -34,10 +34,4 @@ export class CompleteRegisterDto {
     @Transform(({ value }: { value: string }) => value?.trim())
     phone_number: string;
 
-    @ApiProperty({ example: 'StrongP@ss1', description: 'رمز عبور' })
-    @IsString({ message: 'رمز عبور باید از نوع متن باشد' })
-    @IsNotEmpty({ message: 'رمز عبور نمی‌تواند خالی باشد' })
-    @MinLength(8, { message: 'رمز عبور باید حداقل ۸ کاراکتر داشته باشد' })
-    @MaxLength(128, { message: 'رمز عبور نمی‌تواند بیشتر از ۱۲۸ کاراکتر باشد' })
-    password: string;
 }

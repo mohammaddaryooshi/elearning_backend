@@ -18,4 +18,7 @@ export class ContactMessageEntity extends BaseEntity {
 
     @Column({ type: 'text' })
     message: string;
+
+    @Column({ type: 'boolean', default: false })
+    is_read: boolean;
 }

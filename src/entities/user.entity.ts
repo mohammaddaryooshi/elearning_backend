@@ -34,8 +34,6 @@ export class UserEntity extends BaseEntity {
     @Column({ type: 'varchar', length: 255, unique: true })
     email: string;
 
-    @Column({ type: 'varchar', length: 255 })
-    password: string;
 
     @ManyToMany(() => RoleEntity, (role) => role.users, { cascade: true })
     @JoinTable({

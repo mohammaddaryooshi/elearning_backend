@@ -47,21 +47,6 @@ export class CreateUserDto {
     @Transform(({ value }: { value: string }) => value?.toLowerCase().trim())
     email: string;
 
-    @ApiProperty({
-        example: 'StrongP@ss1',
-        description: 'حداقل ۸ کاراکتر شامل حرف بزرگ، حرف کوچک، عدد و کاراکتر خاص',
-        minLength: 8,
-        maxLength: 128,
-    })
-    @IsString({ message: 'رمز عبور باید از نوع متن باشد' })
-    @IsNotEmpty({ message: 'رمز عبور نمی‌تواند خالی باشد' })
-    @MinLength(8, { message: 'رمز عبور باید حداقل ۸ کاراکتر داشته باشد' })
-    @MaxLength(128, { message: 'رمز عبور نمی‌تواند بیشتر از ۱۲۸ کاراکتر باشد' })
-    @Matches(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).+$/,
-        { message: 'رمز عبور ضعیف است: باید شامل حرف بزرگ، حرف کوچک، عدد و کاراکتر خاص باشد' },
-    )
-    password: string;
 
     @ApiPropertyOptional({
         example: 'user',
