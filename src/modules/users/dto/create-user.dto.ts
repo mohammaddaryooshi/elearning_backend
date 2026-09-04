@@ -1,60 +1,43 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
     IsEmail,
-    IsEnum,
-    IsNotEmpty,
+    IsInt,
     IsOptional,
     IsString,
     Matches,
     MaxLength,
-    MinLength,
+    Min,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { USER_CONSTANTS } from '../../../common/constants/app.constants';
 
 export class CreateUserDto {
-    @ApiProperty({ example: 'علی', description: 'نام', maxLength: 100 })
-    @IsString({ message: 'نام باید از نوع متن باشد' })
-    @IsNotEmpty({ message: 'نام نمی‌تواند خالی باشد' })
-    @MinLength(2, { message: 'نام باید حداقل ۲ کاراکتر داشته باشد' })
-    @MaxLength(100, { message: 'نام نمی‌تواند بیشتر از ۱۰۰ کاراکتر باشد' })
-    @Transform(({ value }: { value: string }) => value?.trim())
-    first_name: string;
+    @ApiPropertyOptional({ example: 'علی', maxLength: 100 })
+    @IsOptional()
+    @IsString({ message: 'نام باید متنی باشد' })
+    @MaxLength(100, { message: 'نام نباید بیشتر از ۱۰۰ کاراکتر باشد' })
+    first_name?: string;
 
-    @ApiProperty({ example: 'محمدی', description: 'نام خانوادگی', maxLength: 100 })
-    @IsString({ message: 'نام خانوادگی باید از نوع متن باشد' })
-    @IsNotEmpty({ message: 'نام خانوادگی نمی‌تواند خالی باشد' })
-    @MinLength(2, { message: 'نام خانوادگی باید حداقل ۲ کاراکتر داشته باشد' })
-    @MaxLength(100, { message: 'نام خانوادگی نمی‌تواند بیشتر از ۱۰۰ کاراکتر باشد' })
-    @Transform(({ value }: { value: string }) => value?.trim())
-    last_name: string;
+    @ApiPropertyOptional({ example: 'رضایی', maxLength: 100 })
+    @IsOptional()
+    @IsString({ message: 'نام خانوادگی باید متنی باشد' })
+    @MaxLength(100, { message: 'نام خانوادگی نباید بیشتر از ۱۰۰ کاراکتر باشد' })
+    last_name?: string;
 
-    @ApiProperty({ example: '+989121234567', description: 'شماره موبایل (فرمت E.164)', maxLength: 15 })
-    @IsString({ message: 'شماره تلفن باید از نوع متن باشد' })
-    @MinLength(10, { message: 'شماره تلفن باید حداقل ۱۰ کاراکتر داشته باشد' })
-    @MaxLength(15, { message: 'شماره تلفن نمی‌تواند بیشتر از ۱۵ کاراکتر باشد' })
-    @Matches(
-        /^\+?[1-9]\d{9,14}$/,
-        { message: 'فرمت شماره تلفن نامعتبر است (مثال: +989121234567)' },
-    )
-    @Transform(({ value }: { value: string }) => value?.trim())
-    phone_number?: string;
-
-    @ApiProperty({ example: 'user@example.com', description: 'آدرس ایمیل یکتا', maxLength: 255 })
-    @IsEmail({}, { message: 'فرمت ایمیل وارد شده نامعتبر است' })
-    @IsNotEmpty({ message: 'ایمیل نمی‌تواند خالی باشد' })
-    @MaxLength(USER_CONSTANTS.MAX_EMAIL_LENGTH, { message: `ایمیل نمی‌تواند بیشتر از ${USER_CONSTANTS.MAX_EMAIL_LENGTH} کاراکتر باشد` })
-    @Transform(({ value }: { value: string }) => value?.toLowerCase().trim())
+    @ApiProperty({ example: 'user@example.com', maxLength: 255 })
+    @IsEmail({}, { message: 'فرمت ایمیل نامعتبر است' })
+    @MaxLength(255, { message: 'ایمیل نباید بیشتر از ۲۵۵ کاراکتر باشد' })
     email: string;
 
+    @ApiPropertyOptional({ example: '09121234567', maxLength: 15 })
+    @IsOptional()
+    @Matches(/^09\d{9}$/, { message: 'فرمت شماره موبایل نامعتبر است' })
+    phone_number?: string;
 
     @ApiPropertyOptional({
-        example: 'user',
-        description: 'نقش کاربر',
-        enum: USER_CONSTANTS.ROLES,
-        default: USER_CONSTANTS.DEFAULT_ROLE,
+        example: 3,
+        description: 'شناسه نقش کاربر؛ در صورت عدم ارسال، نقش پیش‌فرض student (شناسه ۳) اعمال می‌شود',
     })
     @IsOptional()
-    @IsEnum(USER_CONSTANTS.ROLES, { message: `نقش کاربر باید یکی از مقادیر معتبر باشد: ${USER_CONSTANTS.ROLES?.join('، ')}` })
-    role?: string = USER_CONSTANTS.DEFAULT_ROLE;
+    @IsInt({ message: 'شناسه نقش باید عدد صحیح باشد' })
+    @Min(1, { message: 'شناسه نقش نامعتبر است' })
+    role?: number;
 }

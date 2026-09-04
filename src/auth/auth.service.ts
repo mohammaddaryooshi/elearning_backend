@@ -271,7 +271,7 @@ export class AuthService {
             ...dto,
             email,
             phone_number: phone,
-            role: USER_CONSTANTS.DEFAULT_ROLE,
+            role: USER_CONSTANTS.DEFAULT_ROLE_ID,
         });
 
         challenge.consumed_at = new Date();

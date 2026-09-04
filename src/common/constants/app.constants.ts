@@ -23,6 +23,7 @@ export const USER_CONSTANTS = {
     MAX_NAME_LENGTH: 255,
     MAX_EMAIL_LENGTH: 255,
     DEFAULT_ROLE: 'student',
+    DEFAULT_ROLE_ID: 3,
     ADMIN_ROLE: 'admin',
     ROLES: ['student', 'teacher', 'admin'],
 };

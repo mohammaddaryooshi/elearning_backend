@@ -27,18 +27,9 @@ export class ApiSuccessInterceptor<T>
                     return data as unknown as ApiSuccessResponse<T>;
                 }
 
-                const statusMessages: Record<string, string> = {
-                    POST: 'Resource created successfully',
-                    GET: 'Data retrieved successfully',
-                    PUT: 'Resource updated successfully',
-                    PATCH: 'Resource updated successfully',
-                    DELETE: 'Resource deleted successfully',
-                };
-
                 return {
                     success: true,
                     statusCode: response.statusCode,
-                    message: statusMessages[method] ?? 'Operation completed successfully',
                     data: data ?? null,
                 };
             }),

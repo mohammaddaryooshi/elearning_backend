@@ -1,28 +1,35 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
-import { DeepPartial } from 'typeorm';
-import * as bcrypt from 'bcrypt';
-import { BaseService } from '../../../common/base/base.service';
+import {
+    BadRequestException,
+    ConflictException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
+import { FindOptionsOrder, FindOptionsWhere } from 'typeorm';
 import { UsersRepository } from '../repositories/users.repository';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserEntity } from '@entities/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 import { RoleEntity } from '@entities/role.entity';
-import { Repository } from 'typeorm';
+import { PaginatedResult } from '@base/base.repository';
 import { USER_CONSTANTS } from '@constants/app.constants';
 
 @Injectable()
-export class UsersService extends BaseService<UserEntity> {
-    constructor(
-        private readonly usersRepository: UsersRepository,
-        @InjectRepository(RoleEntity)
-        private readonly roleRepository: Repository<RoleEntity>,
-    ) {
-        super(usersRepository);
-    }
+export class UsersService {
+    constructor(private readonly usersRepository: UsersRepository) { }
 
-    async findPaginated(page = 1, limit = 10) {
-        return this.findWithPagination(page, limit, { id: 'ASC' } as any);
+    async findAll(
+        page?: number,
+        limit?: number,
+        order?: FindOptionsOrder<UserEntity>,
+        where?: FindOptionsWhere<UserEntity> | FindOptionsWhere<UserEntity>[],
+    ): Promise<PaginatedResult<UserEntity>> {
+        return this.usersRepository.findAll({
+            page,
+            limit,
+            order,
+            where,
+            relations: { roles: true },
+        });
     }
 
     async findByEmail(email: string): Promise<UserEntity | null> {
@@ -33,48 +40,115 @@ export class UsersService extends BaseService<UserEntity> {
         return this.usersRepository.findByPhone(phoneNumber);
     }
 
+    async findOne(id: number): Promise<UserEntity> {
+        const user = await this.usersRepository.findById(id, {
+            relations: { roles: true },
+        });
+        if (!user) {
+            throw new NotFoundException('کاربر مورد نظر یافت نشد');
+        }
+        return user;
+    }
+
+    async findById(id: number): Promise<UserEntity> {
+        const user = await this.usersRepository.findById(id);
+
+        if (!user) {
+            throw new NotFoundException('کاربر مورد نظر یافت نشد');
+        }
+
+        return user;
+    }
+
+
     async create(dto: CreateUserDto): Promise<UserEntity> {
-        const exists = await this.usersRepository.emailExists(dto.email);
-        if (exists) {
+        const emailTaken = await this.usersRepository.emailExists(dto.email);
+        if (emailTaken) {
             throw new ConflictException('این ایمیل قبلا ثبت شده است');
         }
 
-        const roleName = dto.role || USER_CONSTANTS.DEFAULT_ROLE;
-        const role = await this.roleRepository.findOne({ where: { name: roleName } });
-
-        if (!role) {
-            throw new BadRequestException('نقش کاربر معتبر نیست');
-        }
-
-        return super.create({
-            ...dto,
-            roles: [role],
-        } as DeepPartial<UserEntity>);
-    }
-
-    async update(id: number, dto: UpdateUserDto): Promise<UserEntity> {
-        if (dto.email) {
-            const exists = await this.usersRepository.emailExists(dto.email, id);
-            if (exists) {
-                throw new ConflictException('این ایمیل قبلا ثبت شده است');
+        if (dto.phone_number) {
+            const phoneTaken = await this.usersRepository.phoneExists(dto.phone_number);
+            if (phoneTaken) {
+                throw new ConflictException('این شماره تلفن قبلا ثبت شده است');
             }
         }
 
-        const data: DeepPartial<UserEntity> = { ...dto } as any;
+        // نقش پیش‌فرض: student (id = 3) در صورت عدم ارسال role
+        const role = await this.resolveRole(dto.role ?? USER_CONSTANTS.DEFAULT_ROLE_ID);
 
+        // ثبت کاربر همراه با نقش؛ به‌واسطه cascade روی ManyToMany،
+        // رکورد مربوطه به‌صورت خودکار در جدول user_roles درج می‌شود
+        const user = await this.usersRepository.create({
+            first_name: dto.first_name,
+            last_name: dto.last_name,
+            phone_number: dto.phone_number,
+            email: dto.email,
+            roles: [role],
+        });
 
-
-        return super.update(id, data);
+        return this.usersRepository.save(user);
     }
 
-    async remove(id: number): Promise<void> {
-        await this.findById(id); // throws NotFoundException if missing
-        await this.softDelete(id);
+    async update(id: number, dto: UpdateUserDto): Promise<UserEntity> {
+        const user = await this.findOne(id);
+
+        if (dto.email && dto.email !== user.email) {
+            const emailTaken = await this.usersRepository.emailExists(dto.email, id);
+            if (emailTaken) {
+                throw new ConflictException('این ایمیل قبلا ثبت شده است');
+            }
+            user.email = dto.email;
+        }
+
+        if (dto.phone_number !== undefined && dto.phone_number !== user.phone_number) {
+            if (dto.phone_number) {
+                const phoneTaken = await this.usersRepository.phoneExists(
+                    dto.phone_number,
+                    id,
+                );
+                if (phoneTaken) {
+                    throw new ConflictException('این شماره تلفن قبلا ثبت شده است');
+                }
+            }
+            user.phone_number = dto.phone_number;
+        }
+
+        if (dto.first_name !== undefined) {
+            user.first_name = dto.first_name;
+        }
+
+        if (dto.last_name !== undefined) {
+            user.last_name = dto.last_name;
+        }
+
+        if (dto.role !== undefined) {
+            user.roles = [await this.resolveRole(dto.role)];
+        }
+
+        return this.usersRepository.save(user);
     }
 
-    /** Strips password before returning user to the API layer */
-    sanitize(user: UserEntity): Omit<UserEntity, 'password'> {
-        const { password: _pw, ...safe } = user as any;
-        return safe;
+    async remove(id: number): Promise<UserEntity> {
+        await this.findOne(id);
+        await this.usersRepository.softDelete(id);
+
+        const deleted = await this.usersRepository.findByIdWithDeleted(id, {
+            relations: { roles: true },
+        });
+        if (!deleted) {
+            throw new NotFoundException('کاربر مورد نظر یافت نشد');
+        }
+
+        return deleted;
     }
+
+    private async resolveRole(roleId: number): Promise<RoleEntity> {
+        const role = await this.usersRepository.findRoleById(roleId);
+        if (!role) {
+            throw new BadRequestException('نقش کاربر معتبر نیست');
+        }
+        return role;
+    }
+
 }

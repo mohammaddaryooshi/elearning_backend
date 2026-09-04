@@ -1,4 +1,3 @@
-// permissions/permissions.repository.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -15,25 +14,39 @@ export class PermissionsRepository extends BaseRepository<PermissionEntity> {
         super(permissionRepo);
     }
 
-    async findAll(): Promise<PermissionEntity[]> {
-        return this.permissionRepo.find({ order: { id: 'ASC' } });
-    }
-
-    async findById(id: number): Promise<PermissionEntity | null> {
-        return this.permissionRepo.findOneBy({ id });
-    }
-
     async findByIds(ids: number[]): Promise<PermissionEntity[]> {
         if (ids.length === 0) return [];
-        return this.permissionRepo.findBy({ id: In(ids) });
+        return this.permissionRepo.find({ where: { id: In(ids) } });
     }
 
-    async findByNames(names: string[]): Promise<PermissionEntity[]> {
-        if (names.length === 0) return [];
-        return this.permissionRepo.findBy({ name: In(names) });
+    async findByIdWithDeleted(id: number): Promise<PermissionEntity | null> {
+        return this.permissionRepo.findOne({
+            where: { id },
+            withDeleted: true,
+        });
     }
 
-    async nameExists(name: string): Promise<boolean> {
-        return (await this.permissionRepo.countBy({ name })) > 0;
+    async nameExists(name: string, excludeId?: number): Promise<boolean> {
+        const qb = this.permissionRepo
+            .createQueryBuilder('permission')
+            .where('permission.name = :name', { name });
+
+        if (excludeId) {
+            qb.andWhere('permission.id != :excludeId', { excludeId });
+        }
+
+        return (await qb.getCount()) > 0;
+    }
+
+    async isAssignedToRoles(permissionId: number): Promise<boolean> {
+        const row = await this.permissionRepo
+            .createQueryBuilder('permission')
+            .innerJoin('permission.roles', 'role')
+            .where('permission.id = :permissionId', { permissionId })
+            .select('permission.id')
+            .limit(1)
+            .getRawOne();
+
+        return !!row;
     }
 }

@@ -26,21 +26,20 @@ You are a Senior Backend Architect specializing in NestJS, TypeScript, TypeORM, 
 - ORM: TypeORM (Repository Pattern, Data Mapper)
 - Database: MySQL
 - Response Contract: All endpoints must strictly wrap responses using `ApiSuccessResponse<T>` and `ApiErrorResponse` interfaces defined in `src/common/interfaces/api-response.interface.ts`.
-- Validation: Strict DTO validation using `class-validator` and `class-transformer`.
-- API Documentation: `@nestjs/swagger`.
+- Validation: Strict DTO validation using `class-validator` and `class@ API Documentation: `@nestjs/swagger`.
 
 # Swagger & Documentation Standards
 
 - Every Controller and Endpoint must be fully decorated with Swagger decorators (`@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiParam`, `@ApiQuery`, `@ApiBody`).
 - **Language Split:**
-  - `@ApiTags`, `@ApiOperation` (`summary`, `description`), `@ApiParam` (`description`), `@ApiQuery` (`description`), `@ApiBody` (`description`), and `@ApiResponse` (`description`) must be written in **English**.
-  - DTO `@ApiProperty` / `@ApiPropertyOptional` `description` and `example` values must be in **Persian (Farsi)** since they represent user-facing data.
+  - ALL Swagger decorators and metadata — `@ApiTags`, `@ApiOperation` (`summary`, `description`), `@ApiParam` (`description`), `@ApiQuery` (`description`), `@ApiBody` (`description`), `@ApiResponse` (`description`), and DTO `@ApiProperty` / `@ApiPropertyOptional` (`description`, `example`) — must be written in **English**.
+  - Only `class-validator` error messages and service-layer messages (`ApiSuccessResponse.message`, thrown exception messages) must be in **Persian**.
 - Document all expected HTTP status codes (e.g., 200/201 Success, 400 Validation Error, 404 Not Found, 409 Conflict, 500 Internal Error).
 
 # DTO & Validation Rules
 
 - Error Messages: Every `class-validator` decorator MUST have a custom, user-friendly error message in **Persian** (e.g., `@IsNotEmpty({ message: 'عنوان دوره الزامی است.' })`, `@IsEmail({}, { message: 'فرمت ایمیل وارد شده نامعتبر است.' })`).
-- All DTO properties must have `@ApiProperty` or `@ApiPropertyOptional` with Persian `description` and realistic Persian `example` values.
+- All DTO properties must have `@ApiProperty` or `@ApiPropertyOptional` with an **English** `description` and a realistic **English** `example` value.
 
 # Coding Standards & Architecture
 
