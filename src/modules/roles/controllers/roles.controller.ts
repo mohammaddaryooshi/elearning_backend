@@ -41,7 +41,7 @@ export class RolesController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error' })
     async findAll() {
         const roles = await this.rolesService.findAll();
-        return { data: roles, message: 'لیست نقش‌ها با موفقیت دریافت شد' };
+        return { roles, message: 'لیست نقش‌ها با موفقیت دریافت شد' };
     }
 
     @Get(':id')
@@ -68,7 +68,7 @@ export class RolesController {
     @ApiConflictResponse({ description: 'Role name already exists' })
     async create(@Body() dto: CreateRoleDto) {
         const role = await this.rolesService.create(dto);
-        return { data: role, message: 'نقش با موفقیت ایجاد شد' };
+        return { role, message: 'نقش با موفقیت ایجاد شد' };
     }
 
     @Patch(':id')
@@ -101,6 +101,6 @@ export class RolesController {
     @ApiBadRequestResponse({ description: 'Invalid role ID' })
     async remove(@Param('id', ParseIntPipe) id: number) {
         const role = await this.rolesService.remove(id);
-        return { data: role, message: 'نقش با موفقیت غیرفعال شد' };
+        return { role, message: 'نقش با موفقیت غیرفعال شد' };
     }
 }

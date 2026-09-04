@@ -17,6 +17,7 @@ import { RolesModule } from './modules/roles/roles.module';
 import { CartsModule } from './modules/carts/carts.module';
 import { MailModule } from '@modules/mail/mail.module';
 import { SmsModule } from '@modules/sms/sms.module';
+import { PermissionsModule } from '@modules/permissions/permissions.module';
 
 @Module({
   imports: [
@@ -35,6 +36,8 @@ import { SmsModule } from '@modules/sms/sms.module';
     ]),
     DatabaseModule,
     AuthModule,
+    RolesModule,
+    PermissionsModule,
     UsersModule,
     PostsModule,
     CategoriesModule,
@@ -42,7 +45,6 @@ import { SmsModule } from '@modules/sms/sms.module';
     LessonsModule,
     EnrollmentsModule,
     NotificationsModule,
-    RolesModule,
     CartsModule,
     MailModule,
     SmsModule,

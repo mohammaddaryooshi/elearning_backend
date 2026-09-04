@@ -1,5 +1,6 @@
 import {
     IsArray,
+    IsInt,
     IsNotEmpty,
     IsOptional,
     IsString,
@@ -31,11 +32,12 @@ export class CreateRoleDto {
 
     @ApiPropertyOptional({
         description: 'فهرست نام دسترسی‌های نقش',
-        example: ['manage_courses'],
-        type: [String],
+        example: [1, 2],
+        type: [Number],
     })
     @IsOptional()
-    @IsArray({ message: 'دسترسی‌ها باید به صورت آرایه ارسال شوند.' })
-    @IsString({ each: true, message: 'هر دسترسی باید از نوع متن باشد.' })
-    permissions?: string[];
+    @ApiPropertyOptional({ description: 'لیست ایدی پرمیشن ها', type: [Number] })
+    @IsArray({ message: 'لیست ایدی پرمیشن ها باید به صورت آرایه ارسال شود.' })
+    @IsInt({ each: true, message: 'هر ایدی پرمیشن باید از نوع عدد صحیح باشد.' })
+    permissionIds?: number[];
 }

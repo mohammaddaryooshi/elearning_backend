@@ -9,10 +9,11 @@ import { UpdateRoleDto } from '../dto/update-role.dto';
 import { RolesRepository } from '../repositories/roles.repository';
 import { RoleEntity } from '@entities/role.entity';
 import { PermissionEntity } from '@entities/permission.entity';
+import { PermissionsRepository } from '@modules/permissions/repositories/permissions.repository';
 
 @Injectable()
 export class RolesService {
-    constructor(private readonly rolesRepository: RolesRepository) {}
+    constructor(private readonly rolesRepository: RolesRepository, private readonly permissionRepository: PermissionsRepository) { }
 
     async findAll(): Promise<RoleEntity[]> {
         return this.rolesRepository.findAllWithPermissions();
@@ -26,13 +27,17 @@ export class RolesService {
         return role;
     }
 
+    // roles.service.ts
     async create(dto: CreateRoleDto): Promise<RoleEntity> {
         const nameTaken = await this.rolesRepository.nameExists(dto.name);
         if (nameTaken) {
-            throw new ConflictException('این نام نقش قبلا ثبت شده است');
+            throw new ConflictException('این نام نقش قبلاً ثبت شده است');
         }
 
-        const permissions = await this.resolvePermissions(dto.permissions);
+        const permissions = dto.permissionIds?.length
+            ? await this.resolvePermissions(dto.permissionIds)
+            : [];
+
         const role = this.rolesRepository.createRole({
             name: dto.name,
             description: dto.description ?? null,
@@ -40,6 +45,16 @@ export class RolesService {
         });
 
         return this.rolesRepository.saveRole(role);
+    }
+
+    private async resolvePermissions(ids: number[]): Promise<PermissionEntity[]> {
+        const permissions = await this.permissionRepository.findByIds(ids);
+
+        if (permissions.length !== ids.length) {
+            throw new BadRequestException('یک یا چند شناسه دسترسی نامعتبر است');
+        }
+
+        return permissions;
     }
 
     async update(id: number, dto: UpdateRoleDto): Promise<RoleEntity> {
@@ -57,8 +72,8 @@ export class RolesService {
             role.description = dto.description;
         }
 
-        if (dto.permissions !== undefined) {
-            role.permissions = await this.resolvePermissions(dto.permissions);
+        if (dto.permissionIds !== undefined) {
+            role.permissions = await this.resolvePermissions(dto.permissionIds);
         }
 
         return this.rolesRepository.saveRole(role);
@@ -84,25 +99,5 @@ export class RolesService {
         return deleted;
     }
 
-    private async resolvePermissions(
-        names?: string[],
-    ): Promise<PermissionEntity[]> {
-        if (!names) {
-            return [];
-        }
 
-        const uniqueNames = [...new Set(names)];
-        const permissions =
-            await this.rolesRepository.findPermissionsByNames(uniqueNames);
-
-        if (permissions.length !== uniqueNames.length) {
-            const found = new Set(permissions.map((item) => item.name));
-            const missing = uniqueNames.filter((name) => !found.has(name));
-            throw new BadRequestException(
-                `دسترسی‌های زیر معتبر نیستند: ${missing.join('، ')}`,
-            );
-        }
-
-        return permissions;
-    }
 }

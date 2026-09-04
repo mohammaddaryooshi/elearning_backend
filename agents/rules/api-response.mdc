@@ -1,0 +1,411 @@
+---
+description: NestJS API Response Envelope Standard for the Blog & Course-Selling platform. Every controller/service/filter must wrap ALL responses using ApiSuccessResponse, ApiErrorResponse, or PaginatedApiSuccessResponse. Never return raw entities, arrays, or plain objects.
+globs:
+  - src/**/*.ts
+alwaysApply: true
+---
+
+# API Response Contract — NestJS (Blog + Course-Selling Platform)
+
+This rule is **mandatory**. When writing any Controller, Service, Interceptor, Exception Filter, Pipe, or DTO for this project, ALL endpoint outputs must conform exactly to the interfaces in Section 1. This rule takes precedence over any conflicting rule.
+
+---
+
+## 1) Reference Interfaces (use as-is, no modifications)
+
+````typescript
+export interface ApiSuccessResponse<T> {
+  statusCode: number;
+  message: string;
+  data: T;
+  path: string;
+}
+
+export interface ApiErrorDetail {
+  field?: string;
+  message?: string;
+  data: T;
+  path: string;
+}
+
+export interface ApiErrorDetail {
+  field?: string;
+  message?: string;
+  messages?: string[];
+  value?: unknown;
+  [key: string]: unknown;
+}
+
+export interface ApiErrorResponse {
+  statusCode: number;
+  message: string;
+  errors: ApiErrorDetail[] | Record<string, unknown>tPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface PaginatedData<T> {
+  items: T[];
+  pagination: PaginationMeta;
+}
+
+export interface PaginatedApiSuccessResponse<T> {
+  statusCode: number;
+  message: string;
+  data: PaginatedData<T>;
+  path: string;
+}
+
+---
+
+## 2) Golden Rules
+
+1. **All responses must be enveloped.** Never return a raw entity, raw array, TypeORM/Prisma result, or plain object directly.
+2. **Success responses contain only `data`** — never `errors`.
+3. **Error responses contain only `errors`** — never `data`.
+4. **`statusCode` must always match the actual HTTP status**, read from the Response object by the Interceptor/Filter — never hardcoded in the Controller.
+5. **`path` must always equal `request.originalUrl`** (including query string) and is set only by the Interceptor/Filter — never manually set in a Controller.
+6. **`message` is a short, descriptive English string** conveying the operation type and entity name (e.g. `"Course created successfully"`).
+7. **Default status codes:** Create → `201`, Read / Update / Delete → `200`. Never use `204` — the envelope body is always required.
+8. **Paginated lists** must use `PaginatedData<T>` and the single central `buildPaginationMeta` helper (Section 6).
+9. **Error messages must never expose internal details** (stack traces, raw DB messages, credentials). Log those server-side only.
+
+---
+
+## 3) Controller Pattern
+
+Controllers stay lean. Return either the entity directly (Interceptor builds the envelope) or `{ data, message }` for a custom message:
+
+typescript
+// ✅ Correct — custom message
+@Post()
+async create(@Body() dto: CreateEntityDto) {
+  const result = await this.entityService.create(dto);
+  return { data: result, message: 'Entity created successfully' };
+}
+
+// ✅ Correct — no custom message (Interceptor uses default)
+@Get(':id')
+async findOne(@Param('id', ParseUUIDPipe) id: string) {
+  return this.entityService.findOneOrFail(id);
+}
+
+// ✅ Correct — paginated list
+@Get()
+async findAll(@Query() query: PaginationQueryDto) {
+  const result = await this.entityService.findAll(query);
+  return { data: result, message: 'List retrieved successfully' };
+}
+
+// ✅ Correct — hard delete (record no longer exists)
+@Delete(':id')
+async remove(@Param('id', ParseUUIDPipe) id: string) {
+  await this.entityService.remove(id);
+  return { data: null, message: 'Entity deleted successfully' };
+}
+
+// ✅ Correct — soft delete (record still exists, return updated state)
+@Delete(':id')
+async softRemove(@Param('id', ParseUUIDPipe) id: string) {
+  const result = await this.entityService.softRemove(id);
+  return { data: result, message: 'Entity deactivated successfully' };
+}
+
+// ❌ Wrong — raw array/entity
+return this.repo.find();
+
+// ❌ Wrong — manually building the envelope in the Controller
+return { statusCode: 200, data, path: req.url };
+
+// ❌ Wrong — using 204 (no body)
+@HttpCode(204)
+
+---
+
+## 4) HTTP Status Code Selection
+
+| Situation | Code | When |
+|---|---|---|
+| Input validation / invalid DTO | `400` | class-validator errors or invalid param format (e.g. UUID) |
+| Authentication failure | `401` | Missing/invalid/expired token, wrong credentials |
+| Authorization failure | `403` | User is authenticated but lacks permission (role or ownership) |
+| Resource not found | `404` | No record exists with the given id |
+| Conflict | `409` | Duplicate value (slug/email), deleting a parent with active children, duplicate enrollment |
+| Business logic violation | `422` | Valid request but domain rule blocks it (capacity full, expired coupon, already completed) |
+| Rate limit exceeded | `429` | Too many requests |
+| Internal server error | `500` | Unexpected unhandled exception |
+| Dependent service unavailable | `503` | DB / storage / payment gateway unreachable |
+
+---
+
+## 5) Error Response Rules
+
+### Structure of `errors`
+
+- **Field-level errors (validation):** `ApiErrorDetail[]` — one item per failing field.
+  - Single constraint → use `message`.
+  - Multiple constraints → use `messages: string[]`.
+  - Always include `value` (the user's submitted value; empty string or `null` for blank fields).
+- **Global / context errors (no specific field):** `ApiErrorDetail[]` with only `message`, or a `Record<string, unknown>` for structured metadata (e.g. `retryAfterSeconds`).
+- **No details available:** `[]` (empty array).
+
+### Throwing errors in Services
+
+typescript
+throw new NotFoundException('Resource not found');
+
+throw new ConflictException({
+  message: 'This slug is already in use',
+  errors: [{ field: 'slug', message: 'Slug already taken', value: slug }],
+});
+
+throw new ForbiddenException('You do not have permission to perform this action');
+
+throw new UnauthorizedException('Token is invalid or has expired');
+
+throw new UnprocessableEntityException({
+  message: 'Cannot apply coupon',
+  errors: [{ field: 'couponCode', message: 'Coupon has expired', value: code }],
+});
+
+---
+
+## 6) Pagination Rules
+
+- Standard query params: `page` (default `1`) and `limit` (default `10`, max `100`).
+- Invalid `page` or `limit` → `400` error with the relevant field in `errors`.
+- `total` = total record count **without** applying page/limit.
+- **Use onl in `errors`.
+- `total` = total record count **without** applying page/limit.
+- **Use only this helper for `PaginationMeta`:**
+
+typescript
+export function buildPagintotal,
+totalPages,
+hasNextPage: page < totalPages,
+hasPreviousPage: page > 1,
+  };
+}
+
+- If `page` exceeds `totalPages`, return `items: []` with the requested page — this is not an error.
+- Default sort order: `createdAt DESC` unless another query defines it.
+
+typescript
+// Service pattern
+async findAll(query: PaginationQueryDto) {
+  const { page, limit } = query;
+  const [items, total] = await this.repo.findAndCount({
+skip: (page - 1) * limit,
+take: limit,
+order: { createdAt: 'DESC' },
+  });
+  return { items, pagination: buildPaginationMeta(total, page, limit) };
+}
+
+**Pagination rule for entity types:**
+- Potentially large datasets (courses, posts, users, orders, comments) → always paginate.
+- Inherently small datasets (categories, tags, sliders) → simple array is fine.
+
+---
+
+## 7) Edge Cases
+
+- **Empty paginated list:** Return `items: []` with `total: 0`, `totalPages: 0`, `hasNextPage: false`, `hasPreviousPage: false`. Status `200`, not `404`.
+- **Empty non-paginated list:** Return `data: []`. Status `200`, not `404`.
+- **Hard delete:** `data: null`.
+- **Soft delete:** `data: { ...updatedEntity }` (the record still exists).
+- **Deleting a non-existent resource:** `404` error.
+- **Deleting a resource with active dependents:** `409` error.
+- **Bulk operations:** Return `data: { successCount, failureCount, failedItems: [...] }`. Status `200`.
+
+---
+
+## 8) Implementation Reference
+
+### Global Success Interceptor
+
+typescript
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
+import { Request, Response } from 'express';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { ApiSuccessResponse } from './interfaces/api-response.interface';
+
+@Injectable()
+export class ApiSuccessInterceptor<T>
+  implements NestInterceptor<T, ApiSuccessResponse<T>>
+{
+  intercept(
+context: ExecutionContext,
+next: CallHandler<T>,
+  ): Observable<ApiSuccessResponse<T>> {
+const ctx = context.switchToHttp();
+const req = ctx.getRequest<Request>();
+const res = ctx.getResponse<Response>();
+
+return next.handle().pipe(
+map((payload: any) => {
+const isWrapped =
+payload &&
+typeof payload === 'object' &&
+'data' in payload &&
+'message' in payload;
+
+const data = isWrapped ? payload.data : payload;
+const message = isWrapped
+? payload.message
+: 'Operation completed successfully';
+
+return {
+statusCode: res.statusCode,
+message,
+data,
+path: req.originalUrl,
+};
+}),
+);
+  }
+}
+
+Register in `main.ts`:
+typescript
+app.useGlobalInterceptors(new ApiSuccessInterceptor());
+
+### Global Validation Pipe
+
+typescript
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { ValidationError } from 'class-validator';
+import { ApiErrorDetail } from './interfaces/api-response.interface';
+
+app.useGlobalPipes(
+  new ValidationPipe({
+whitelist: true,
+transform: true,
+exceptionFactory: (validationErrors: ValidationError[]) => {
+const errors: ApiErrorDetail[] = [];
+
+const flatten = (errs: ValidationError[], parent = '') => {
+for (const e of errs) {
+const field = parent ? `${parent}.${e.property}` : e.property;
+if (e.constraints) {
+errors.push({
+field,
+messages: Object.values(e.constraints),
+value: e.value ?? null,
+});
+}
+if (e.children?.length) flatten(e.children, field);
+}
+};
+
+flatten(validationErrors);
+return new BadRequestException({
+message: 'Input validation failed',
+errors,
+});
+},
+  }),
+);
+
+### Global Exception Filter
+
+typescript
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
+import { Request, Response } from 'express';
+import {
+  ApiErrorDetail,
+  ApiErrorResponse,
+} from './interfaces/api-response.interface';
+
+@Catch()
+export class ApiExceptionFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+const ctx = host.switchToHttp();
+const res = ctx.getResponse<Response>();
+const req = ctx.getRequest<Request>();
+
+let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+let message = 'Internal server error';
+let errors: ApiErrorDetail[] | Record<string, unknown> | [] = [];
+
+if (exception instanceof HttpException) {
+statusCode = exception.getStatus();
+const body = exception.getResponse();
+
+if (typeof body === 'string') {
+message = body;
+} else if (body && typeof body === 'object') {
+const b = body as Record<string, any>;
+if (typeof b.message === 'string') message = b.message;
+else if (Array.isArray(b.message)) {
+errors = b.message.map((m: string) => ({ message: m }));
+}
+if (b.errors) errors = b.errors;
+}
+} else {
+// ⛔ Log full details server-side only — never expose to client
+console.error('Unhandled exception:', exception);
+}
+
+const payload: ApiErrorResponse = {
+statusCode,
+message,
+errors,
+path: req.originalUrl,
+};
+res.status(statusCode).json(payload);
+  }
+}
+
+Register in `main.ts`:
+o client
+console.error('Unhandled exception:', exception);
+}
+
+const payload: ApiErrorResponse = {
+statusCode,
+message,
+errors,
+path: req.originalUrl,
+};
+res.status(statusCode).json(payload);
+  }
+}
+
+Register in `main.ts`:
+typescript
+app.useGlobalFilvalue directly, or `{ data, message }` — nothing raw.
+- [ ] Status code is correct: Create=201, all others=200, errors per the table in Section 4.
+- [ ] `message` is concise and describes the operation and entity. others=200, errors per the table in Section 4.
+- [ ] `message` is concise and describes the operation and entity.
+- [ ] Large/variable-size lisr contain `data`; success responses never contain `errors`.
+- [ ] `statusCode` and `path` are never set manually in the Controller.
+- [ ] `500` respons `statusCode` and `path` are never set manually in the Controller.
+- [ ] `500` responses contain no internal details — only a generic message.
+- [ ] Empty list and null-a edge cases follow Section 7.
+
+### Anti-patterns (never do these)
+
+```typescript
+// ❌ Raw array or entity
+return this.repo.find();
+
+// ❌ Manually building the envelope in a Controller
+return { statusCode: 200, data, path: req.url };
+
+// ❌a: null, errors: [...] };
+
+// ❌ Leaking internal error detail in a 500
+message: 'QueryFailedError: duplicate key value violates unique constraint "UQ_slug"';
+````
