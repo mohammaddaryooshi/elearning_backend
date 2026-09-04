@@ -18,7 +18,7 @@ export class BaseQueryDto {
     @Min(1)
     limit?: number;
 
-    @ApiPropertyOptional({ example: 'ali' })
+    @ApiPropertyOptional({ example: 'name' })
     @IsOptional()
     @IsString()
     search?: string;

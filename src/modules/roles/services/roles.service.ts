@@ -10,13 +10,23 @@ import { RolesRepository } from '../repositories/roles.repository';
 import { RoleEntity } from '@entities/role.entity';
 import { PermissionEntity } from '@entities/permission.entity';
 import { PermissionsRepository } from '@modules/permissions/repositories/permissions.repository';
+import { RolsQueryDto } from '../dto/role-query.dto';
+import { PaginatedResult } from '@base/base.repository';
 
 @Injectable()
 export class RolesService {
     constructor(private readonly rolesRepository: RolesRepository, private readonly permissionRepository: PermissionsRepository) { }
 
-    async findAll(): Promise<RoleEntity[]> {
-        return this.rolesRepository.findAllWithPermissions();
+    async findAll(query: RolsQueryDto): Promise<PaginatedResult<RoleEntity>> {
+        return this.rolesRepository.findAll({
+            page: query.page,
+            limit: query.limit,
+            search: query.search,
+            searchFields: ['name', 'description'],
+            sortBy: query.sortBy ?? 'created_at',
+            sortOrder: query.sortOrder ?? 'DESC',
+            relations: { permissions: true }
+        });
     }
 
     async findOne(id: number): Promise<RoleEntity> {
@@ -27,7 +37,6 @@ export class RolesService {
         return role;
     }
 
-    // roles.service.ts
     async create(dto: CreateRoleDto): Promise<RoleEntity> {
         const nameTaken = await this.rolesRepository.nameExists(dto.name);
         if (nameTaken) {
@@ -57,7 +66,7 @@ export class RolesService {
         return permissions;
     }
 
-    async update(id: number, dto: UpdateRoleDto): Promise<RoleEntity> {
+    async update(id: number, dto: UpdateRoleDto): Promise<{ data: RoleEntity, message: string }> {
         const role = await this.findOne(id);
 
         if (dto.name && dto.name !== role.name) {
@@ -76,10 +85,14 @@ export class RolesService {
             role.permissions = await this.resolvePermissions(dto.permissionIds);
         }
 
-        return this.rolesRepository.saveRole(role);
+        const updatedRole = await this.rolesRepository.saveRole(role);
+        return {
+            data: updatedRole,
+            message: "نقش با موفقیت ویرایش شد"
+        }
     }
 
-    async remove(id: number): Promise<RoleEntity> {
+    async remove(id: number): Promise<{ data: RoleEntity, message: string }> {
         await this.findOne(id);
 
         const hasUsers = await this.rolesRepository.hasAssignedUsers(id);
@@ -96,7 +109,7 @@ export class RolesService {
             throw new NotFoundException('نقش مورد نظر یافت نشد');
         }
 
-        return deleted;
+        return { data: deleted, message: "'نقش با موفقیت غیرفعال شد" };
     }
 
 

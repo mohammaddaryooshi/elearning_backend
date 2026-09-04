@@ -42,7 +42,10 @@ async function bootstrap() {
   });
 
   // Global exception filter — must be before interceptor
-  app.useGlobalFilters(new ApiExceptionFilter());
+  app.useGlobalFilters(
+    new GlobalExceptionFilter(),   // fallback
+    new ApiExceptionFilter(),      // اول اجرا می‌شود
+  );
 
   // Global success interceptor
   app.useGlobalInterceptors(new ApiSuccessInterceptor());
@@ -57,8 +60,7 @@ async function bootstrap() {
     }),
   );
 
-  // ── Global Exception Filter (no internal leak) ────────────────────────────
-  app.useGlobalFilters(new GlobalExceptionFilter());
+
 
   // ── API Prefix ────────────────────────────────────────────────────────────
   app.setGlobalPrefix('api/v1');

@@ -7,6 +7,7 @@ import {
     ParseIntPipe,
     Patch,
     Post,
+    Query,
 } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
@@ -24,6 +25,9 @@ import {
 import { RolesService } from '../services/roles.service';
 import { CreateRoleDto } from '../dto/create-role.dto';
 import { UpdateRoleDto } from '../dto/update-role.dto';
+import { PaginatedResult } from '@base/base.repository';
+import { RoleEntity } from '@entities/role.entity';
+import { RolsQueryDto } from '../dto/role-query.dto';
 
 @ApiTags('Roles')
 @ApiBearerAuth()
@@ -39,9 +43,8 @@ export class RolesController {
     })
     @ApiOkResponse({ description: 'Roles retrieved successfully' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error' })
-    async findAll() {
-        const roles = await this.rolesService.findAll();
-        return { roles, message: 'لیست نقش‌ها با موفقیت دریافت شد' };
+    async findAll(@Query() query: RolsQueryDto): Promise<PaginatedResult<RoleEntity>> {
+        return this.rolesService.findAll(query);
     }
 
     @Get(':id')
@@ -54,8 +57,8 @@ export class RolesController {
     @ApiNotFoundResponse({ description: 'Role not found' })
     @ApiBadRequestResponse({ description: 'Invalid role ID' })
     async findOne(@Param('id', ParseIntPipe) id: number) {
-        const role = await this.rolesService.findOne(id);
-        return { data: role, message: 'نقش با موفقیت دریافت شد' };
+        return await this.rolesService.findOne(id);
+
     }
 
     @Post()
@@ -85,8 +88,8 @@ export class RolesController {
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdateRoleDto,
     ) {
-        const role = await this.rolesService.update(id, dto);
-        return { data: role, message: 'نقش با موفقیت ویرایش شد' };
+        return await this.rolesService.update(id, dto);
+
     }
 
     @Delete(':id')
@@ -100,7 +103,6 @@ export class RolesController {
     @ApiConflictResponse({ description: 'Role is assigned to one or more users' })
     @ApiBadRequestResponse({ description: 'Invalid role ID' })
     async remove(@Param('id', ParseIntPipe) id: number) {
-        const role = await this.rolesService.remove(id);
-        return { role, message: 'نقش با موفقیت غیرفعال شد' };
+        return await this.rolesService.remove(id);
     }
 }

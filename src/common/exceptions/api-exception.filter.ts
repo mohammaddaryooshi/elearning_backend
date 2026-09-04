@@ -35,13 +35,10 @@ const NESTJS_DEFAULT_MESSAGES: Record<string, string> = {
     'Validation failed': 'خطای اعتبارسنجی داده‌ها',
 };
 
-function translateMessage(message: string, status: number): string {
-    return (
-        NESTJS_DEFAULT_MESSAGES[message] ??
-        HTTP_MESSAGES_FA[status] ??
-        message
-    );
+function translateMessage(message: string): string {
+    return NESTJS_DEFAULT_MESSAGES[message] ?? message;
 }
+
 
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
@@ -53,7 +50,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
         const request = ctx.getRequest<Request>();
 
         let status = HttpStatus.INTERNAL_SERVER_ERROR;
-        let message = HTTP_MESSAGES_FA[HttpStatus.INTERNAL_SERVER_ERROR];
+        let message: string | undefined;
         let errors: string[] | undefined;
 
         if (exception instanceof HttpException) {
@@ -61,7 +58,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
             const exceptionResponse = exception.getResponse();
 
             if (typeof exceptionResponse === 'string') {
-                message = translateMessage(exceptionResponse, status);
+                message = translateMessage(exceptionResponse);
             } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
                 const resp = exceptionResponse as Record<string, unknown>;
 
@@ -69,7 +66,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
                     message = 'خطای اعتبارسنجی داده‌ها';
                     errors = resp['message'] as string[];
                 } else if (typeof resp['message'] === 'string') {
-                    message = translateMessage(resp['message'], status);
+                    message = translateMessage(resp['message']);
                 }
             }
         } else if (exception instanceof Error) {
@@ -78,6 +75,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
                 exception.stack,
             );
         }
+        message ??= HTTP_MESSAGES_FA[status] ?? 'خطای داخلی سرور';
 
         const errorResponse: ApiErrorResponse = {
             success: false,
@@ -90,4 +88,5 @@ export class ApiExceptionFilter implements ExceptionFilter {
 
         response.status(status).json(errorResponse);
     }
+
 }
