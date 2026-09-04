@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOneOptions, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
-import { BaseRepository } from '../../../common/base/base.repository';
+import { BaseRepository, FindOneOptions } from '../../../common/base/base.repository';
 import { UserEntity } from '@entities/user.entity';
 import { RoleEntity } from '@entities/role.entity';
 
@@ -17,14 +17,30 @@ export class UsersRepository extends BaseRepository<UserEntity> {
         super(userRepo);
     }
 
-    async findByEmail(email: string): Promise<UserEntity | null> {
-        return this.findOne({ email }, { relations: { roles: true } });
+
+    async findByEmail(
+        email: string,
+        options?: Omit<FindOneOptions<UserEntity>, 'where'>,
+    ): Promise<UserEntity | null> {
+        return this.findOne(
+            { email },
+            {
+                relations: { roles: { permissions: true } },
+                ...options,
+            },
+        );
     }
 
-    async findByPhone(phoneNumber: string): Promise<UserEntity | null> {
+    async findByPhone(
+        phoneNumber: string,
+        options?: Omit<FindOneOptions<UserEntity>, 'where'>,
+    ): Promise<UserEntity | null> {
         return this.findOne(
             { phone_number: phoneNumber },
-            { relations: { roles: true } },
+            {
+                relations: { roles: { permissions: true } },
+                ...options,
+            },
         );
     }
 
@@ -33,6 +49,7 @@ export class UsersRepository extends BaseRepository<UserEntity> {
         options?: Omit<FindOneOptions<UserEntity>, 'where' | 'withDeleted'>,
     ): Promise<UserEntity | null> {
         return this.userRepo.findOne({
+            relations: { roles: { permissions: true } },
             ...options,
             where: { id },
             withDeleted: true,

@@ -30,6 +30,7 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserEntity } from '@entities/user.entity';
 import { PaginatedResult } from '../../../common/base/base.repository';
+import { UsersQueryDto } from '../dto/users-query.dto';
 
 @ApiTags('کاربران')
 @ApiBearerAuth()
@@ -41,40 +42,15 @@ export class UsersController {
     @Get()
     @ApiOperation({
         summary: 'دریافت لیست کاربران',
-        description: 'فهرست صفحه‌بندی‌شده کاربران به همراه نقش‌ها را برمی‌گرداند.',
-    })
-    @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-    @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-    @ApiQuery({ name: 'sortBy', required: false, type: String, example: 'created_at' })
-    @ApiQuery({
-        name: 'sortOrder',
-        required: false,
-        enum: ['ASC', 'DESC'],
-        example: 'DESC',
-    })
-    @ApiQuery({ name: 'email', required: false, type: String, description: 'فیلتر بر اساس ایمیل' })
-    @ApiQuery({
-        name: 'phone_number',
-        required: false,
-        type: String,
-        description: 'فیلتر بر اساس شماره موبایل',
+        description: 'دریافت لیست کاربران به همراه قابلیت صفحه‌بندی، جستجو، فیلتر و مرتب‌سازی',
     })
     @ApiOkResponse({ description: 'لیست کاربران با موفقیت دریافت شد' })
-    @ApiBadRequestResponse({ description: 'پارامتر مرتب‌سازی نامعتبر است' })
+    @ApiBadRequestResponse({ description: 'خطای داخلتر مرتب‌سازی نامعتبر است' })
     @ApiInternalServerErrorResponse({ description: 'خطای داخلی سرور' })
-    async findAll(
-        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-        @Query('sortBy', new DefaultValuePipe('createdAt')) sortBy: string,
-        @Query('sortOrder', new DefaultValuePipe('DESC')) sortOrder: 'ASC' | 'DESC',
-        @Query('name') name?: string,
-    ): Promise<PaginatedResult<UserEntity>> {
-        const order: FindOptionsOrder<UserEntity> = {
-            [sortBy]: sortOrder,
-        } as FindOptionsOrder<UserEntity>;
-        const where: FindOptionsWhere<UserEntity> = {};
-        return this.usersService.findAll(page, limit, order, where);
+    async findAll(@Query() query: UsersQueryDto): Promise<PaginatedResult<UserEntity>> {
+        return this.usersService.findAll(query);
     }
+
 
     @Get(':id')
     @ApiOperation({

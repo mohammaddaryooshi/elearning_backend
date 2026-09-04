@@ -12,33 +12,34 @@ import { UserEntity } from '@entities/user.entity';
 import { RoleEntity } from '@entities/role.entity';
 import { PaginatedResult } from '@base/base.repository';
 import { USER_CONSTANTS } from '@constants/app.constants';
+import { UsersQueryDto } from '../dto/users-query.dto';
 
 @Injectable()
 export class UsersService {
     constructor(private readonly usersRepository: UsersRepository) { }
 
-    async findAll(
-        page?: number,
-        limit?: number,
-        order?: FindOptionsOrder<UserEntity>,
-        where?: FindOptionsWhere<UserEntity> | FindOptionsWhere<UserEntity>[],
-    ): Promise<PaginatedResult<UserEntity>> {
+    async findAll(query: UsersQueryDto): Promise<PaginatedResult<UserEntity>> {
         return this.usersRepository.findAll({
-            page,
-            limit,
-            order,
-            where,
+            page: query.page,
+            limit: query.limit,
+
+            search: query.search,
+            searchFields: ['first_name', 'last_name', 'email', 'phone_number'],
+
+            filters: {
+                email: query.email,
+                phone_number: query.phone_number,
+                first_name: query.first_name,
+                last_name: query.last_name,
+            },
+
+            sortBy: query.sortBy ?? 'createdAt',
+            sortOrder: query.sortOrder ?? 'DESC',
+
             relations: { roles: true },
         });
     }
 
-    async findByEmail(email: string): Promise<UserEntity | null> {
-        return this.usersRepository.findByEmail(email);
-    }
-
-    async findByPhone(phoneNumber: string): Promise<UserEntity | null> {
-        return this.usersRepository.findByPhone(phoneNumber);
-    }
 
     async findOne(id: number): Promise<UserEntity> {
         const user = await this.usersRepository.findById(id, {
@@ -50,8 +51,22 @@ export class UsersService {
         return user;
     }
 
+    async findByEmail(email: string): Promise<UserEntity | null> {
+        return this.usersRepository.findByEmail(email, {
+            relations: { roles: { permissions: true } },
+        });
+    }
+
+    async findByPhone(phoneNumber: string): Promise<UserEntity | null> {
+        return this.usersRepository.findByPhone(phoneNumber, {
+            relations: { roles: { permissions: true } },
+        });
+    }
+
     async findById(id: number): Promise<UserEntity> {
-        const user = await this.usersRepository.findById(id);
+        const user = await this.usersRepository.findById(id, {
+            relations: { roles: { permissions: true } },
+        });
 
         if (!user) {
             throw new NotFoundException('کاربر مورد نظر یافت نشد');
@@ -59,6 +74,7 @@ export class UsersService {
 
         return user;
     }
+
 
 
     async create(dto: CreateUserDto): Promise<UserEntity> {
