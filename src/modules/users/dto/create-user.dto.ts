@@ -1,4 +1,3 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
     IsEmail,
     IsInt,
@@ -8,36 +7,61 @@ import {
     MaxLength,
     Min,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { VALIDATION_MESSAGES } from '../../../common/messages';
+import { USER_MESSAGES } from '../constants/user.messages';
+
 
 export class CreateUserDto {
-    @ApiPropertyOptional({ example: 'علی', maxLength: 100 })
+    @ApiPropertyOptional({
+        description: 'User first name',
+        example: 'Ali',
+        maxLength: 100,
+    })
     @IsOptional()
-    @IsString({ message: 'نام باید متنی باشد' })
-    @MaxLength(100, { message: 'نام نباید بیشتر از ۱۰۰ کاراکتر باشد' })
+    @IsString({ message: VALIDATION_MESSAGES.MUST_BE_STRING(USER_MESSAGES.FIRST_NAME) })
+    @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH(USER_MESSAGES.FIRST_NAME, 100) })
+    @Transform(({ value }: { value?: string }) => value?.trim())
     first_name?: string;
 
-    @ApiPropertyOptional({ example: 'رضایی', maxLength: 100 })
+    @ApiPropertyOptional({
+        description: 'User last name',
+        example: 'Rezaei',
+        maxLength: 100,
+    })
     @IsOptional()
-    @IsString({ message: 'نام خانوادگی باید متنی باشد' })
-    @MaxLength(100, { message: 'نام خانوادگی نباید بیشتر از ۱۰۰ کاراکتر باشد' })
+    @IsString({ message: VALIDATION_MESSAGES.MUST_BE_STRING(USER_MESSAGES.LAST_NAME) })
+    @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH(USER_MESSAGES.LAST_NAME, 100) })
+    @Transform(({ value }: { value?: string }) => value?.trim())
     last_name?: string;
 
-    @ApiProperty({ example: 'user@example.com', maxLength: 255 })
-    @IsEmail({}, { message: 'فرمت ایمیل نامعتبر است' })
-    @MaxLength(255, { message: 'ایمیل نباید بیشتر از ۲۵۵ کاراکتر باشد' })
+    @ApiProperty({
+        description: 'User email address',
+        example: 'user@example.com',
+        maxLength: 255,
+    })
+    @IsEmail({}, { message: VALIDATION_MESSAGES.INVALID(USER_MESSAGES.EMAIL) })
+    @MaxLength(255, { message: VALIDATION_MESSAGES.MAX_LENGTH(USER_MESSAGES.EMAIL, 255) })
+    @Transform(({ value }: { value: string }) => value?.trim().toLowerCase())
     email: string;
 
-    @ApiPropertyOptional({ example: '09121234567', maxLength: 15 })
+    @ApiPropertyOptional({
+        description: 'User phone number in format 09xxxxxxxxx',
+        example: '09121234567',
+        maxLength: 15,
+    })
     @IsOptional()
-    @Matches(/^09\d{9}$/, { message: 'فرمت شماره موبایل نامعتبر است' })
+    @Matches(/^09\d{9}$/, { message: VALIDATION_MESSAGES.INVALID(USER_MESSAGES.PHONE_NUMBER) })
+    @Transform(({ value }: { value?: string }) => value?.trim())
     phone_number?: string;
 
     @ApiPropertyOptional({
+        description: 'User role ID; defaults to student (ID: 3) if not provided',
         example: 3,
-        description: 'شناسه نقش کاربر؛ در صورت عدم ارسال، نقش پیش‌فرض student (شناسه ۳) اعمال می‌شود',
     })
     @IsOptional()
-    @IsInt({ message: 'شناسه نقش باید عدد صحیح باشد' })
-    @Min(1, { message: 'شناسه نقش نامعتبر است' })
+    @IsInt({ message: VALIDATION_MESSAGES.MUST_BE_INTEGER(USER_MESSAGES.ROLE_ID) })
+    @Min(1, { message: VALIDATION_MESSAGES.MIN_VALUE(USER_MESSAGES.ROLE_ID, 1) })
     role?: number;
 }
