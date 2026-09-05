@@ -1,3 +1,4 @@
+import { ResponseMessage } from '@decorators/response-message.decorator';
 import {
     Body,
     Controller,
@@ -28,6 +29,7 @@ import { UpdateRoleDto } from '../dto/update-role.dto';
 import { PaginatedResult } from '@base/base.repository';
 import { RoleEntity } from '@entities/role.entity';
 import { RolsQueryDto } from '../dto/role-query.dto';
+import { ROLE_MESSAGES } from '../constants/role.messages';
 
 @ApiTags('Roles')
 @ApiBearerAuth()
@@ -69,9 +71,10 @@ export class RolesController {
     @ApiCreatedResponse({ description: 'Role created successfully' })
     @ApiBadRequestResponse({ description: 'Validation error or invalid permission ID' })
     @ApiConflictResponse({ description: 'Role name already exists' })
+    @ResponseMessage(ROLE_MESSAGES.ROLE_CREATE_SUCCESSFULLY)
     async create(@Body() dto: CreateRoleDto) {
-        const role = await this.rolesService.create(dto);
-        return { role, message: 'نقش با موفقیت ایجاد شد' };
+        return await this.rolesService.create(dto);
+
     }
 
     @Patch(':id')
@@ -84,6 +87,7 @@ export class RolesController {
     @ApiBadRequestResponse({ description: 'Validation error or invalid permission ID' })
     @ApiNotFoundResponse({ description: 'Role not found' })
     @ApiConflictResponse({ description: 'Role name already exists' })
+    @ResponseMessage(ROLE_MESSAGES.ROLE_UPDATE_SUCCESSFULLY)
     async update(
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdateRoleDto,
@@ -102,6 +106,7 @@ export class RolesController {
     @ApiNotFoundResponse({ description: 'Role not found' })
     @ApiConflictResponse({ description: 'Role is assigned to one or more users' })
     @ApiBadRequestResponse({ description: 'Invalid role ID' })
+    @ResponseMessage(ROLE_MESSAGES.ROLE_SOFT_DELETE_SUCCESSFULLY)
     async remove(@Param('id', ParseIntPipe) id: number) {
         return await this.rolesService.remove(id);
     }

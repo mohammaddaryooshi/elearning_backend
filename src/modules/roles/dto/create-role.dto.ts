@@ -8,36 +8,37 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ROLE_MESSAGES } from '../constants/role.messages';
+import { VALIDATION_MESSAGES } from '../../../common/messages';
 
 export class CreateRoleDto {
     @ApiProperty({
-        description: 'نام یکتای نقش',
+        description: ROLE_MESSAGES.ROLE_UNIQE_NAME,
         example: 'editor',
         maxLength: 100,
     })
-    @IsString({ message: 'نام نقش باید از نوع متن باشد.' })
-    @IsNotEmpty({ message: 'نام نقش الزامی است.' })
-    @MaxLength(100, { message: 'نام نقش نمی‌تواند بیشتر از ۱۰۰ کاراکتر باشد.' })
+    @IsString({ message: VALIDATION_MESSAGES.MUST_BE_STRING('نام نقش') })
+    @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('نام نقش') })
+    @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('نام نقش', 100) })
     @Transform(({ value }: { value: string }) => value?.trim())
     name: string;
 
     @ApiPropertyOptional({
-        description: 'توضیحات نقش',
-        example: 'ویرایش محتوای دوره‌ها',
+        description: ROLE_MESSAGES.ROLE_DESCRIPTION,
+        example: ROLE_MESSAGES.EDITE_COURSE_CONTENT,
     })
     @IsOptional()
-    @IsString({ message: 'توضیحات نقش باید از نوع متن باشد.' })
+    @IsString({ message: VALIDATION_MESSAGES.MUST_BE_STRING('توضیحات نقش') })
     @Transform(({ value }: { value?: string }) => value?.trim())
     description?: string;
 
     @ApiPropertyOptional({
-        description: 'فهرست نام دسترسی‌های نقش',
+        description: ROLE_MESSAGES.ROLE_PERMISSION_IDS_LABEL,
         example: [1, 2],
         type: [Number],
     })
     @IsOptional()
-    @ApiPropertyOptional({ description: 'لیست ایدی پرمیشن ها', type: [Number] })
-    @IsArray({ message: 'لیست ایدی پرمیشن ها باید به صورت آرایه ارسال شود.' })
-    @IsInt({ each: true, message: 'هر ایدی پرمیشن باید از نوع عدد صحیح باشد.' })
+    @IsArray({ message: ROLE_MESSAGES.ROLE_PERMISSION_IDS_MUST_BE_ARRAY })
+    @IsInt({ each: true, message: ROLE_MESSAGES.ROLE_PERMISSION_IDS_MUST_BE_INT })
     permissionIds?: number[];
 }

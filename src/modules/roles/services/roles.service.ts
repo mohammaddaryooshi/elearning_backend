@@ -12,6 +12,7 @@ import { PermissionEntity } from '@entities/permission.entity';
 import { PermissionsRepository } from '@modules/permissions/repositories/permissions.repository';
 import { RolsQueryDto } from '../dto/role-query.dto';
 import { PaginatedResult } from '@base/base.repository';
+import { ROLE_MESSAGES } from '../constants/role.messages';
 
 @Injectable()
 export class RolesService {
@@ -32,7 +33,7 @@ export class RolesService {
     async findOne(id: number): Promise<RoleEntity> {
         const role = await this.rolesRepository.findByIdWithPermissions(id);
         if (!role) {
-            throw new NotFoundException('نقش مورد نظر یافت نشد');
+            throw new NotFoundException(ROLE_MESSAGES.ROLE_NOTFOUND);
         }
         return role;
     }
@@ -40,7 +41,7 @@ export class RolesService {
     async create(dto: CreateRoleDto): Promise<RoleEntity> {
         const nameTaken = await this.rolesRepository.nameExists(dto.name);
         if (nameTaken) {
-            throw new ConflictException('این نام نقش قبلاً ثبت شده است');
+            throw new ConflictException(ROLE_MESSAGES.ROLE_IS_CREATED_RECENTLY);
         }
 
         const permissions = dto.permissionIds?.length
@@ -60,19 +61,19 @@ export class RolesService {
         const permissions = await this.permissionRepository.findByIds(ids);
 
         if (permissions.length !== ids.length) {
-            throw new BadRequestException('یک یا چند شناسه دسترسی نامعتبر است');
+            throw new BadRequestException(ROLE_MESSAGES.ROLE_PERMISSIONS_IDS_INVALID);
         }
 
         return permissions;
     }
 
-    async update(id: number, dto: UpdateRoleDto): Promise<{ data: RoleEntity, message: string }> {
+    async update(id: number, dto: UpdateRoleDto): Promise<RoleEntity> {
         const role = await this.findOne(id);
 
         if (dto.name && dto.name !== role.name) {
             const nameTaken = await this.rolesRepository.nameExists(dto.name, id);
             if (nameTaken) {
-                throw new ConflictException('این نام نقش قبلا ثبت شده است');
+                throw new ConflictException(ROLE_MESSAGES.ROLE_IS_CREATED_RECENTLY);
             }
             role.name = dto.name;
         }
@@ -85,20 +86,17 @@ export class RolesService {
             role.permissions = await this.resolvePermissions(dto.permissionIds);
         }
 
-        const updatedRole = await this.rolesRepository.saveRole(role);
-        return {
-            data: updatedRole,
-            message: "نقش با موفقیت ویرایش شد"
-        }
+        return await this.rolesRepository.saveRole(role);
+
     }
 
-    async remove(id: number): Promise<{ data: RoleEntity, message: string }> {
+    async remove(id: number): Promise<RoleEntity> {
         await this.findOne(id);
 
         const hasUsers = await this.rolesRepository.hasAssignedUsers(id);
         if (hasUsers) {
             throw new ConflictException(
-                'این نقش به کاربرانی اختصاص داده شده و قابل حذف نیست',
+                ROLE_MESSAGES.ROLE_IS_FOR_MANY_ROLES,
             );
         }
 
@@ -106,10 +104,10 @@ export class RolesService {
 
         const deleted = await this.rolesRepository.findByIdWithDeleted(id);
         if (!deleted) {
-            throw new NotFoundException('نقش مورد نظر یافت نشد');
+            throw new NotFoundException(ROLE_MESSAGES.ROLE_NOTFOUND);
         }
 
-        return { data: deleted, message: "'نقش با موفقیت غیرفعال شد" };
+        return deleted;
     }
 
 
