@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './config/database.module';
@@ -18,6 +18,7 @@ import { CartsModule } from './modules/carts/carts.module';
 import { MailModule } from '@modules/mail/mail.module';
 import { SmsModule } from '@modules/sms/sms.module';
 import { PermissionsModule } from '@modules/permissions/permissions.module';
+import { ApiSuccessInterceptor } from './common/interceptors/api-success.interceptor';
 
 @Module({
   imports: [
@@ -56,6 +57,10 @@ import { PermissionsModule } from '@modules/permissions/permissions.module';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ApiSuccessInterceptor,
     },
     JwtAuthGuard,
   ],

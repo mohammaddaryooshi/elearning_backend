@@ -30,6 +30,8 @@ import { UpdatePermissionDto } from '../dto/update-permission.dto';
 import { PermissionEntity } from '@entities/permission.entity';
 import { PaginatedResult } from '@base/base.repository';
 import { FindOptionsOrder, FindOptionsWhere } from 'typeorm';
+import { PermissionQueryDto } from '../dto/permission-query.dto';
+import { ResponseMessage } from '@decorators/response-message.decorator';
 
 @ApiTags('Permissions')
 @ApiBearerAuth()
@@ -39,31 +41,13 @@ export class PermissionsController {
     constructor(private readonly permissionsService: PermissionsService) { }
     @Get()
     @ApiOperation({
-        summary: 'List all permissions',
-        description: 'Returns a paginated list of all registered permissions.',
+        summary: 'List all Permissions',
+        description: 'Returns all Permissions including their associated roles.',
     })
-    @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-    @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-    @ApiQuery({ name: 'sortBy', required: false, type: String, example: 'createdAt' })
-    @ApiQuery({ name: 'sortOrder', required: false, enum: ['ASC', 'DESC'], example: 'DESC' })
-    @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by permission name' })
     @ApiOkResponse({ description: 'Permissions retrieved successfully' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error' })
-    async findAll(
-        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-        @Query('sortBy', new DefaultValuePipe('createdAt')) sortBy: string,
-        @Query('sortOrder', new DefaultValuePipe('DESC')) sortOrder: 'ASC' | 'DESC',
-        @Query('name') name?: string,
-    ): Promise<PaginatedResult<PermissionEntity>> {
-        const order: FindOptionsOrder<PermissionEntity> = {
-            [sortBy]: sortOrder,
-        } as FindOptionsOrder<PermissionEntity>;
-
-        const where: FindOptionsWhere<PermissionEntity> = {};
-        if (name) where.name = name;
-
-        return this.permissionsService.findAll(page, limit, order, where);
+    async findAll(@Query() query: PermissionQueryDto): Promise<PaginatedResult<PermissionEntity>> {
+        return this.permissionsService.findAll(query);
     }
 
 
@@ -77,8 +61,8 @@ export class PermissionsController {
     @ApiNotFoundResponse({ description: 'Permission not found' })
     @ApiBadRequestResponse({ description: 'Invalid permission ID' })
     async findOne(@Param('id', ParseIntPipe) id: number) {
-        const permission = await this.permissionsService.findOne(id);
-        return { data: permission, message: 'دسترسی با موفقیت دریافت شد' };
+        return await this.permissionsService.findOne(id);
+
     }
 
     @Post()
@@ -89,9 +73,9 @@ export class PermissionsController {
     @ApiCreatedResponse({ description: 'Permission created successfully' })
     @ApiBadRequestResponse({ description: 'Validation error' })
     @ApiConflictResponse({ description: 'Permission name already exists' })
+    @ResponseMessage('دسترسی با موفقیت ایجاد شد')
     async create(@Body() dto: CreatePermissionDto) {
-        const permission = await this.permissionsService.create(dto);
-        return { permission, message: 'دسترسی با موفقیت ایجاد شد' };
+        return await this.permissionsService.create(dto);
     }
 
     @Patch(':id')
@@ -104,12 +88,13 @@ export class PermissionsController {
     @ApiBadRequestResponse({ description: 'Validation error' })
     @ApiNotFoundResponse({ description: 'Permission not found' })
     @ApiConflictResponse({ description: 'Permission name already exists' })
+    @ResponseMessage('دسترسی با موفقیت ویرایش شد')
     async update(
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdatePermissionDto,
     ) {
-        const permission = await this.permissionsService.update(id, dto);
-        return { data: permission, message: 'دسترسی با موفقیت ویرایش شد' };
+        return await this.permissionsService.update(id, dto);
+
     }
 
     @Delete(':id')
@@ -122,8 +107,8 @@ export class PermissionsController {
     @ApiNotFoundResponse({ description: 'Permission not found' })
     @ApiConflictResponse({ description: 'Permission is assigned to one or more roles' })
     @ApiBadRequestResponse({ description: 'Invalid permission ID' })
+    @ResponseMessage('دسترسی با موفقیت غیر فعال شد')
     async remove(@Param('id', ParseIntPipe) id: number) {
-        const permission = await this.permissionsService.remove(id);
-        return { permission, message: 'دسترسی با موفقیت غیرفعال شد' };
+        return await this.permissionsService.remove(id);
     }
 }

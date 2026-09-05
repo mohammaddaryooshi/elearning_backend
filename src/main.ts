@@ -47,8 +47,7 @@ async function bootstrap() {
     new ApiExceptionFilter(),      // اول اجرا می‌شود
   );
 
-  // Global success interceptor
-  app.useGlobalInterceptors(new ApiSuccessInterceptor());
+
 
   // ── Global Validation (OWASP: Injection / Input Validation) ───────────────
   app.useGlobalPipes(

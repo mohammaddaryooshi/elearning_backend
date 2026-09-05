@@ -8,17 +8,22 @@ import { CreatePermissionDto } from '../dto/create-permission.dto';
 import { UpdatePermissionDto } from '../dto/update-permission.dto';
 import { PermissionEntity } from '@entities/permission.entity';
 import { PaginatedResult } from '@base/base.repository';
-import { FindOptionsOrder, FindOptionsWhere } from 'typeorm';
+import { PermissionQueryDto } from '../dto/permission-query.dto';
 
 @Injectable()
 export class PermissionsService {
     constructor(private readonly permissionsRepository: PermissionsRepository) { }
 
-    async findAll(page?: number,
-        limit?: number,
-        order?: FindOptionsOrder<PermissionEntity>,
-        where?: FindOptionsWhere<PermissionEntity> | FindOptionsWhere<PermissionEntity>[]): Promise<PaginatedResult<PermissionEntity>> {
-        return this.permissionsRepository.findAll({ page, limit, order, where })
+    async findAll(query: PermissionQueryDto): Promise<PaginatedResult<PermissionEntity>> {
+        return this.permissionsRepository.findAll({
+            page: query.page,
+            limit: query.limit,
+            search: query.search,
+            searchFields: ['name', 'description'],
+            sortBy: query.sortBy ?? 'created_at',
+            sortOrder: query.sortOrder ?? 'DESC',
+            relations: { roles: true }
+        });
     }
 
     async findOne(id: number): Promise<PermissionEntity> {
@@ -58,7 +63,8 @@ export class PermissionsService {
             permission.description = dto.description;
         }
 
-        return this.permissionsRepository.save(permission);
+        return await this.permissionsRepository.save(permission);
+
     }
 
     async remove(id: number): Promise<PermissionEntity> {

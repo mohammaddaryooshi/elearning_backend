@@ -1,6 +1,7 @@
 export interface ApiSuccessResponse<T = unknown> {
     success: true;
     statusCode: number;
+    message?: string;
     data: T | null;
 }
 
