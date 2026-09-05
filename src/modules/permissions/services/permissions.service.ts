@@ -1,3 +1,4 @@
+import { PERMISSION_MESSAGES } from './../constants/permission.messages';
 import {
     ConflictException,
     Injectable,
@@ -29,7 +30,7 @@ export class PermissionsService {
     async findOne(id: number): Promise<PermissionEntity> {
         const permission = await this.permissionsRepository.findById(id);
         if (!permission) {
-            throw new NotFoundException('دسترسی مورد نظر یافت نشد');
+            throw new NotFoundException(PERMISSION_MESSAGES.PERMISSION_NOTFOUND);
         }
         return permission;
     }
@@ -37,7 +38,7 @@ export class PermissionsService {
     async create(dto: CreatePermissionDto): Promise<PermissionEntity> {
         const nameTaken = await this.permissionsRepository.nameExists(dto.name);
         if (nameTaken) {
-            throw new ConflictException('این نام دسترسی قبلاً ثبت شده است');
+            throw new ConflictException(PERMISSION_MESSAGES.PERMISSION_IS_CREATED_RECENTLY);
         }
 
         const permission = await this.permissionsRepository.create({
@@ -54,7 +55,7 @@ export class PermissionsService {
         if (dto.name !== undefined) {
             const nameTaken = await this.permissionsRepository.nameExists(dto.name, id);
             if (nameTaken) {
-                throw new ConflictException('این نام دسترسی قبلاً ثبت شده است');
+                throw new ConflictException(PERMISSION_MESSAGES.PERMISSION_IS_CREATED_RECENTLY);
             }
             permission.name = dto.name;
         }
@@ -73,7 +74,7 @@ export class PermissionsService {
         const assignedToRoles = await this.permissionsRepository.isAssignedToRoles(id);
         if (assignedToRoles) {
             throw new ConflictException(
-                'این دسترسی به نقش‌هایی اختصاص داده شده و قابل حذف نیست',
+                PERMISSION_MESSAGES.PERMISSION_IS_FOR_MANY_ROLES,
             );
         }
 
@@ -81,7 +82,7 @@ export class PermissionsService {
 
         const deleted = await this.permissionsRepository.findByIdWithDeleted(id);
         if (!deleted) {
-            throw new NotFoundException('دسترسی مورد نظر یافت نشد');
+            throw new NotFoundException(PERMISSION_MESSAGES.PERMISSION_NOTFOUND);
         }
 
         return deleted;

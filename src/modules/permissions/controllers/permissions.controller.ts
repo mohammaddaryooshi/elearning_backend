@@ -1,7 +1,6 @@
 import {
     Body,
     Controller,
-    DefaultValuePipe,
     Delete,
     Get,
     Param,
@@ -20,7 +19,6 @@ import {
     ApiOkResponse,
     ApiOperation,
     ApiParam,
-    ApiQuery,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -29,9 +27,9 @@ import { CreatePermissionDto } from '../dto/create-permission.dto';
 import { UpdatePermissionDto } from '../dto/update-permission.dto';
 import { PermissionEntity } from '@entities/permission.entity';
 import { PaginatedResult } from '@base/base.repository';
-import { FindOptionsOrder, FindOptionsWhere } from 'typeorm';
 import { PermissionQueryDto } from '../dto/permission-query.dto';
 import { ResponseMessage } from '@decorators/response-message.decorator';
+import { PERMISSION_MESSAGES } from '../constants/permission.messages';
 
 @ApiTags('Permissions')
 @ApiBearerAuth()
@@ -73,7 +71,7 @@ export class PermissionsController {
     @ApiCreatedResponse({ description: 'Permission created successfully' })
     @ApiBadRequestResponse({ description: 'Validation error' })
     @ApiConflictResponse({ description: 'Permission name already exists' })
-    @ResponseMessage('دسترسی با موفقیت ایجاد شد')
+    @ResponseMessage(PERMISSION_MESSAGES.PERMISSION_CREATE_SUCCESSFULLY)
     async create(@Body() dto: CreatePermissionDto) {
         return await this.permissionsService.create(dto);
     }
@@ -88,7 +86,7 @@ export class PermissionsController {
     @ApiBadRequestResponse({ description: 'Validation error' })
     @ApiNotFoundResponse({ description: 'Permission not found' })
     @ApiConflictResponse({ description: 'Permission name already exists' })
-    @ResponseMessage('دسترسی با موفقیت ویرایش شد')
+    @ResponseMessage(PERMISSION_MESSAGES.PERMISSION_UPDATE_SUCCESSFULLY)
     async update(
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdatePermissionDto,
@@ -107,7 +105,7 @@ export class PermissionsController {
     @ApiNotFoundResponse({ description: 'Permission not found' })
     @ApiConflictResponse({ description: 'Permission is assigned to one or more roles' })
     @ApiBadRequestResponse({ description: 'Invalid permission ID' })
-    @ResponseMessage('دسترسی با موفقیت غیر فعال شد')
+    @ResponseMessage(PERMISSION_MESSAGES.PERMISSION_SOFT_DELETE_SUCCESSFULLY)
     async remove(@Param('id', ParseIntPipe) id: number) {
         return await this.permissionsService.remove(id);
     }

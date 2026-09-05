@@ -1,21 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { VALIDATION_MESSAGES } from '../../../common/messages';
 
 export class CreatePermissionDto {
     @ApiProperty({
-        description: 'نام یکتای دسترسی (مثلاً user:read)',
+        description: VALIDATION_MESSAGES.MUST_BE_STRING('نام دسترسی'),
         example: 'user:read',
     })
-    @IsString({ message: 'نام دسترسی باید رشته باشد' })
-    @IsNotEmpty({ message: 'نام دسترسی الزامی است' })
-    @MaxLength(100, { message: 'نام دسترسی نباید بیشتر از ۱۰۰ کاراکتر باشد' })
+    @IsString({ message: VALIDATION_MESSAGES.MUST_BE_STRING('نام دسترسی') })
+    @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('نام دسترسی') })
+    @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('نام دسترسی', 100) })
     name: string;
 
-    @ApiPropertyOptional({
-        description: 'توضیح اختیاری درباره این دسترسی',
-        example: 'مشاهده اطلاعات کاربران',
-    })
-    @IsString({ message: 'توضیحات باید رشته باشد' })
+    @IsString({ message: VALIDATION_MESSAGES.MUST_BE_STRING('توضیحات') })
     @IsOptional()
     description?: string;
 }
