@@ -31,7 +31,7 @@ import { RoleEntity } from '@entities/role.entity';
 import { RolsQueryDto } from '../dto/role-query.dto';
 import { ROLE_MESSAGES } from '../constants/role.messages';
 
-@ApiTags('Roles')
+@ApiTags('Admin Roles')
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Missing or invalid bearer token' })
 @Controller('roles')

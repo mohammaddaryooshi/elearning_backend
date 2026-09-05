@@ -1,10 +1,10 @@
-export interface ApiSuccessResponse<T = unknown> {
+export interface ApiSuccessResponse<TData = unknown, TMeta = undefined> {
     success: true;
     statusCode: number;
     message?: string;
-    data: T | null;
+    data: TData;
+    meta?: TMeta;
 }
-
 export interface ApiErrorResponse {
     success: false;
     message: string;
@@ -28,4 +28,4 @@ export interface PaginatedData<T> {
     meta: PaginationMeta;
 }
 
-export type PaginatedApiSuccessResponse<T> = ApiSuccessResponse<PaginatedData<T>>;
+export type PaginatedApiSuccessResponse<T> = ApiSuccessResponse<T[], PaginationMeta>;

@@ -31,7 +31,7 @@ import { PermissionQueryDto } from '../dto/permission-query.dto';
 import { ResponseMessage } from '@decorators/response-message.decorator';
 import { PERMISSION_MESSAGES } from '../constants/permission.messages';
 
-@ApiTags('Permissions')
+@ApiTags('Admin Permissions')
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Missing or invalid bearer token' })
 @Controller('permissions')

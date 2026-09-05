@@ -1,7 +1,7 @@
+// src/modules/users/controllers/users.controller.ts
 import {
     Body,
     Controller,
-    DefaultValuePipe,
     Delete,
     Get,
     Param,
@@ -20,94 +20,95 @@ import {
     ApiOkResponse,
     ApiOperation,
     ApiParam,
-    ApiQuery,
     ApiTags,
     ApiUnauthorizedResponse,
+    ApiQuery,
 } from '@nestjs/swagger';
-import { FindOptionsOrder, FindOptionsWhere } from 'typeorm';
+
 import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserEntity } from '@entities/user.entity';
 import { PaginatedResult } from '../../../common/base/base.repository';
 import { UsersQueryDto } from '../dto/users-query.dto';
+import { UserListItemDto } from '../dto/user-list-item.dto';
+import { ResponseMessage } from '@decorators/response-message.decorator';
+import { USER_MESSAGES } from '../constants/user.messages';
 
-@ApiTags('کاربران')
+@ApiTags('Admin Users')
 @ApiBearerAuth()
-@ApiUnauthorizedResponse({ description: 'توکن احراز هویت نامعتبر یا موجود نیست' })
+@ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token' })
 @Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
     @Get()
     @ApiOperation({
-        summary: 'دریافت لیست کاربران',
-        description: 'دریافت لیست کاربران به همراه قابلیت صفحه‌بندی، جستجو، فیلتر و مرتب‌سازی',
+        summary: 'Get list of users',
+        description:
+            'Retrieves a paginated, searchable and filterable list of users with registered courses count and role filtering.',
     })
-    @ApiOkResponse({ description: 'لیست کاربران با موفقیت دریافت شد' })
-    @ApiBadRequestResponse({ description: 'خطای داخلتر مرتب‌سازی نامعتبر است' })
-    @ApiInternalServerErrorResponse({ description: 'خطای داخلی سرور' })
-    async findAll(@Query() query: UsersQueryDto): Promise<PaginatedResult<UserEntity>> {
+    @ApiQuery({ name: 'search', required: false, description: 'Search in first name, last name, email, phone number', example: 'ali' })
+    @ApiQuery({ name: 'roleId', required: false, description: 'Filter by role id', example: 3 })
+    @ApiOkResponse({ description: 'Users list retrieved successfully' })
+    @ApiBadRequestResponse({ description: 'Invalid sort or query parameters' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error' })
+    async findAll(@Query() query: UsersQueryDto): Promise<PaginatedResult<UserListItemDto>> {
         return this.usersService.findAll(query);
     }
 
-
     @Get(':id')
     @ApiOperation({
-        summary: 'مشاهده یک کاربر',
-        description: 'جزئیات یک کاربر به همراه نقش‌های آن را برمی‌گرداند.',
+        summary: 'Get a user',
+        description: 'Returns the details of a user along with their roles.',
     })
-    @ApiParam({ name: 'id', type: Number, example: 1, description: 'شناسه کاربر' })
-    @ApiOkResponse({ description: 'کاربر با موفقیت دریافت شد' })
-    @ApiNotFoundResponse({ description: 'کاربر مورد نظر یافت نشد' })
-    @ApiBadRequestResponse({ description: 'شناسه کاربر نامعتبر است' })
-    async findOne(@Param('id', ParseIntPipe) id: number) {
-        const user = await this.usersService.findOne(id);
-        return { data: user, message: 'کاربر با موفقیت دریافت شد' };
+    @ApiParam({ name: 'id', type: Number, example: 1, description: 'User ID' })
+    @ApiOkResponse({ description: 'User retrieved successfully' })
+    @ApiNotFoundResponse({ description: 'User not found' })
+    @ApiBadRequestResponse({ description: 'Invalid user ID' })
+    async findOne(@Param('id', ParseIntPipe) id: number): Promise<UserEntity> {
+        return this.usersService.findOne(id);
     }
 
     @Post()
     @ApiOperation({
-        summary: 'ایجاد کاربر',
-        description: 'یک کاربر جدید با نقش انتخاب‌شده ایجاد می‌کند.',
+        summary: 'Create a user',
+        description: 'Creates a new user with the selected role.',
     })
-    @ApiCreatedResponse({ description: 'کاربر با موفقیت ایجاد شد' })
-    @ApiBadRequestResponse({ description: 'خطای اعتبارسنجی یا نقش نامعتبر' })
-    @ApiConflictResponse({ description: 'ایمیل یا شماره تلفن تکراری است' })
-    async create(@Body() dto: CreateUserDto) {
-        const user = await this.usersService.create(dto);
-        return { data: user, message: 'کاربر با موفقیت ایجاد شد' };
+    @ApiCreatedResponse({ description: 'User created successfully' })
+    @ApiBadRequestResponse({ description: 'Validation error or invalid role' })
+    @ApiConflictResponse({ description: 'Email or phone number already exists' })
+    @ResponseMessage(USER_MESSAGES.USER_CREATE_SUCCESSFULLY)
+    async create(@Body() dto: CreateUserDto): Promise<UserEntity> {
+        return this.usersService.create(dto);
     }
 
     @Patch(':id')
     @ApiOperation({
-        summary: 'ویرایش کاربر',
-        description: 'اطلاعات پروفایل یا نقش یک کاربر را به‌روزرسانی می‌کند.',
+        summary: 'Update a user',
+        description: 'Updates the profile or role of a user.',
     })
-    @ApiParam({ name: 'id', type: Number, example: 1, description: 'شناسه کاربر' })
-    @ApiOkResponse({ description: 'کاربر با موفقیت ویرایش شد' })
-    @ApiBadRequestResponse({ description: 'خطای اعتبارسنجی یا نقش نامعتبر' })
-    @ApiNotFoundResponse({ description: 'کاربر مورد نظر یافت نشد' })
-    @ApiConflictResponse({ description: 'ایمیل یا شماره تلفن تکراری است' })
-    async update(
-        @Param('id', ParseIntPipe) id: number,
-        @Body() dto: UpdateUserDto,
-    ) {
-        const user = await this.usersService.update(id, dto);
-        return { data: user, message: 'کاربر با موفقیت ویرایش شد' };
+    @ApiParam({ name: 'id', type: Number, example: 1, description: 'User ID' })
+    @ApiOkResponse({ description: 'User updated successfully' })
+    @ApiBadRequestResponse({ description: 'Validation error or invalid role' })
+    @ApiNotFoundResponse({ description: 'User not found' })
+    @ApiConflictResponse({ description: 'Email or phone number already exists' })
+    @ResponseMessage(USER_MESSAGES.USER_UPDATE_SUCCESSFULLY)
+    async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto): Promise<UserEntity> {
+        return this.usersService.update(id, dto);
     }
 
     @Delete(':id')
     @ApiOperation({
-        summary: 'حذف کاربر',
-        description: 'کاربر را به‌صورت نرم حذف می‌کند.',
+        summary: 'Delete a user',
+        description: 'Soft-deletes a user.',
     })
-    @ApiParam({ name: 'id', type: Number, example: 1, description: 'شناسه کاربر' })
-    @ApiOkResponse({ description: 'کاربر با موفقیت غیرفعال شد' })
-    @ApiNotFoundResponse({ description: 'کاربر مورد نظر یافت نشد' })
-    @ApiBadRequestResponse({ description: 'شناسه کاربر نامعتبر است' })
-    async remove(@Param('id', ParseIntPipe) id: number) {
-        const user = await this.usersService.remove(id);
-        return { data: user, message: 'کاربر با موفقیت غیرفعال شد' };
+    @ApiParam({ name: 'id', type: Number, example: 1, description: 'User ID' })
+    @ApiOkResponse({ description: 'User soft-deleted successfully' })
+    @ApiNotFoundResponse({ description: 'User not found' })
+    @ApiBadRequestResponse({ description: 'Invalid user ID' })
+    @ResponseMessage(USER_MESSAGES.USER_SOFT_DELETE_SUCCESSFULLY)
+    async remove(@Param('id', ParseIntPipe) id: number): Promise<UserEntity> {
+        return this.usersService.remove(id);
     }
 }
