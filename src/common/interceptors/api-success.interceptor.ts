@@ -12,7 +12,6 @@ import type { Response } from 'express';
 import { ApiSuccessResponse } from '../interfaces/api-response.interface';
 import { RESPONSE_MESSAGE_KEY } from '../decorators/response-message.decorator';
 
-/** شکل خروجی سرویس وقتی پیام داینامیک است */
 interface ServicePayload<T> {
     data: T;
     message?: string;
@@ -38,7 +37,6 @@ export class ApiSuccessInterceptor<T>
     ): Observable<ApiSuccessResponse<T>> {
         const response = context.switchToHttp().getResponse<Response>();
 
-        // پیام پیش‌فرض اندپوینت: اول هندلر، بعد کنترلر
         const decoratorMessage = this.reflector.getAllAndOverride<string>(
             RESPONSE_MESSAGE_KEY,
             [context.getHandler(), context.getClass()],
@@ -46,7 +44,6 @@ export class ApiSuccessInterceptor<T>
 
         return next.handle().pipe(
             map((raw) => {
-                // پاسخی که خودش کامل ساخته شده
                 if (raw && typeof raw === 'object' && 'success' in raw) {
                     return raw as unknown as ApiSuccessResponse<T>;
                 }

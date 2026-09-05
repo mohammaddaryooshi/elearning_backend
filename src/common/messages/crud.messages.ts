@@ -1,0 +1,33 @@
+export const CRUD_MESSAGES = {
+    CREATED: 'با موفقیت ایجاد شد',
+    UPDATED: 'با موفقیت به‌روزرسانی شد',
+    DELETED: 'با موفقیت حذف شد',
+    RESTORED: 'با موفقیت بازیابی شد',
+    FETCHED: 'اطلاعات با موفقیت دریافت شد',
+    LIST_FETCHED: 'فهرست با موفقیت دریافت شد',
+    OPERATION_SUCCESS: 'عملیات با موفقیت انجام شد',
+    NO_CHANGES: 'تغییری برای اعمال وجود نداشت',
+    ENTITY_CREATED: (entity: string) => `${entity} با موفقیت ایجاد شد`,
+    ENTITY_UPDATED: (entity: string) => `${entity} با موفقیت به‌روزرسانی شد`,
+    ENTITY_DELETED: (entity: string) => `${entity} با موفقیت حذف شد`,
+    ENTITY_RESTORED: (entity: string) => `${entity} با موفقیت بازیابی شد`,
+    BULK_CREATED: (count: number) => `${count} مورد با موفقیت ایجاد شد`,
+    BULK_UPDATED: (count: number) => `${count} مورد با موفقیت به‌روزرسانی شد`,
+    BULK_DELETED: (count: number) => `${count} مورد با موفقیت حذف شد`,
+    BULK_PARTIAL: (ok: number, failed: number) =>
+        `${ok} مورد با موفقیت انجام شد و ${failed} مورد ناموفق بود`,
+    NOT_FOUND: 'موردی با این مشخصات یافت نشد',
+    ENTITY_NOT_FOUND: (entity: string) => `${entity} مورد نظر یافت نشد`,
+    ALREADY_EXISTS: 'این مورد از قبل وجود دارد',
+    ENTITY_ALREADY_EXISTS: (entity: string) => `${entity} از قبل وجود دارد`,
+    CREATE_FAILED: 'ایجاد با خطا مواجه شد',
+    UPDATE_FAILED: 'به‌روزرسانی با خطا مواجه شد',
+    DELETE_FAILED: 'حذف با خطا مواجه شد',
+    ALREADY_DELETED: 'این مورد قبلاً حذف شده است',
+    CANNOT_DELETE_IN_USE: 'این مورد در جای دیگری استفاده شده و قابل حذف نیست',
+    CANNOT_MODIFY_LOCKED: 'این مورد قفل شده و قابل تغییر نیست',
+    INVALID_STATE_TRANSITION: (from: string, to: string) =>
+        `تغییر وضعیت از «${from}» به «${to}» مجاز نیست`,
+    DEPENDENCY_MISSING: (entity: string) =>
+        `${entity} مورد نیاز برای این عملیات وجود ندارد`,
+} as const;
