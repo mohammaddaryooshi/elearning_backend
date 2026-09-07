@@ -47,24 +47,25 @@ export enum PostStatus {
     ARCHIVED = 'archived',
 }
 
-/**
- * Post Robots Directive
- */
-export enum RobotsDirective {
-    INDEX = 'index',
-    NOINDEX = 'noindex',
-    NOINDEX_NOFOLLOW = 'noindex,nofollow',
-}
 
 /**
  * Post Comment Status
  */
+
+export enum RobotsDirective {
+    INDEX = 'index,follow',
+    NOINDEX = 'noindex,follow',
+    INDEX_NOFOLLOW = 'index,nofollow',
+    NOINDEX_NOFOLLOW = 'noindex,nofollow',
+}
 
 export enum PostCommentStatus {
     PENDING = 'pending',
     APPROVED = 'approved',
     REJECTED = 'rejected',
 }
+
+
 
 /**
  * Course Comment Status

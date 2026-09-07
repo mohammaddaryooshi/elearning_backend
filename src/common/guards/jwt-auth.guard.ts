@@ -10,6 +10,14 @@ import { Request } from 'express';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { AUTH_CONSTANTS } from '@constants/app.constants';
 
+type JwtPayload = {
+  sub?: number | string;
+  id?: number | string;
+  email?: string;
+  role?: string;
+  [key: string]: any;
+};
+
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
@@ -26,19 +34,38 @@ export class JwtAuthGuard implements CanActivate {
     if (isPublic) return true;
 
     const request = context.switchToHttp().getRequest<Request>();
-    const token = this.extractBearerToken(request) || this.extractCookieToken(request, AUTH_CONSTANTS.COOKIE_NAMES.ACCESS_TOKEN);
+
+    const token =
+      this.extractBearerToken(request) ||
+      this.extractCookieToken(
+        request,
+        AUTH_CONSTANTS.COOKIE_NAMES.ACCESS_TOKEN,
+      );
 
     if (!token) {
       throw new UnauthorizedException('توکن دسترسی یافت نشد');
     }
 
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret: process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET,
       });
-      // Attach the decoded payload so downstream guards/handlers can read it
-      (request as any).user = payload;
-    } catch {
+
+      const normalizedId = payload.id ?? payload.sub;
+
+      if (normalizedId === undefined || normalizedId === null) {
+        throw new UnauthorizedException('شناسه کاربر در توکن یافت نشد');
+      }
+
+      // Attach normalized user to request
+      (request as any).user = {
+        ...payload,
+        id: typeof normalizedId === 'string' ? Number(normalizedId) : normalizedId,
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
       throw new UnauthorizedException('توکن نامعتبر است یا منقضی شده است');
     }
 

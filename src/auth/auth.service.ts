@@ -72,11 +72,10 @@ export class AuthService {
             where: {
                 identifier: identifier.value,
                 identifier_type: identifier.type,
-                consumed_at: IsNull(),  // فقط challenge های فعال
+                consumed_at: IsNull(),
             } as any,
             order: { created_at: 'DESC' },
         });
-
 
         if (
             lastChallenge &&
@@ -86,10 +85,10 @@ export class AuthService {
             throw new BadRequestException('برای درخواست مجدد کد باید ۲ دقیقه صبر کنید');
         }
 
-
         const otp = this.generateOtpCode();
-
-        const expiresAt = new Date(now.getTime() + this.tokenDurationToMs(AUTH_CONSTANTS.OTP_FLOW_TOKEN_EXPIRES_IN));
+        const expiresAt = new Date(
+            now.getTime() + this.tokenDurationToMs(AUTH_CONSTANTS.OTP_FLOW_TOKEN_EXPIRES_IN),
+        );
 
         const challenge = await this.otpChallengeRepository.save(
             this.otpChallengeRepository.create({
@@ -98,7 +97,9 @@ export class AuthService {
                 purpose: user ? AuthOtpPurpose.LOGIN : AuthOtpPurpose.REGISTER,
                 code_hash: await bcrypt.hash(otp, 10),
                 expires_at: expiresAt,
-                resend_available_at: new Date(now.getTime() + AUTH_CONSTANTS.OTP_RESEND_COOLDOWN_SECONDS * 1000),
+                resend_available_at: new Date(
+                    now.getTime() + AUTH_CONSTANTS.OTP_RESEND_COOLDOWN_SECONDS * 1000,
+                ),
                 verified_at: null,
                 consumed_at: null,
                 verification_attempts: 0,
@@ -108,11 +109,12 @@ export class AuthService {
             }),
         );
 
-
         try {
             await this.deliverOtp(identifier.value, identifier.type, otp);
         } catch (err) {
-            this.logger.error(`OTP delivery failed for identifier type=${identifier.type}: ${(err as Error).message}`);
+            this.logger.error(
+                `OTP delivery failed for identifier type=${identifier.type}: ${(err as Error).message}`,
+            );
             await this.otpChallengeRepository.delete(challenge.id);
             throw new ServiceUnavailableException('ارسال کد تایید با خطا مواجه شد. لطفاً دوباره تلاش کنید');
         }
@@ -124,7 +126,13 @@ export class AuthService {
             purpose: challenge.purpose,
         });
 
-        this.setCookie(response, AUTH_CONSTANTS.COOKIE_NAMES.OTP_FLOW_TOKEN, flowToken, AUTH_CONSTANTS.OTP_FLOW_TOKEN_EXPIRES_IN);
+        this.setCookie(
+            response,
+            AUTH_CONSTANTS.COOKIE_NAMES.OTP_FLOW_TOKEN,
+            flowToken,
+            AUTH_CONSTANTS.OTP_FLOW_TOKEN_EXPIRES_IN,
+        );
+
         return {
             message: 'کد تایید با موفقیت ارسال شد',
             resend_after_seconds: AUTH_CONSTANTS.OTP_RESEND_COOLDOWN_SECONDS,
@@ -141,7 +149,10 @@ export class AuthService {
         const flowPayload = await this.verifyFlowToken(flowToken);
         const identifier = this.normalizeIdentifier(dto.identifier);
 
-        if (flowPayload.identifier !== identifier.value || flowPayload.identifierType !== identifier.type) {
+        if (
+            flowPayload.identifier !== identifier.value ||
+            flowPayload.identifierType !== identifier.type
+        ) {
             throw new BadRequestException('اطلاعات وارد شده با درخواست کد تایید مطابقت ندارد');
         }
 
@@ -149,22 +160,10 @@ export class AuthService {
             where: { id: flowPayload.challengeId } as any,
         });
 
-        if (!challenge) {
-            throw new BadRequestException('کد تایید معتبر نیست');
-        }
-
-        if (challenge.purpose !== flowPayload.purpose) {
-            throw new BadRequestException('نوع درخواست کد تایید معتبر نیست');
-        }
-
-        if (challenge.consumed_at) {
-            throw new BadRequestException('این کد تایید قبلا استفاده شده است');
-        }
-
-        if (challenge.expires_at < new Date()) {
-            throw new BadRequestException('کد تایید منقضی شده است');
-        }
-
+        if (!challenge) throw new BadRequestException('کد تایید معتبر نیست');
+        if (challenge.purpose !== flowPayload.purpose) throw new BadRequestException('نوع درخواست کد تایید معتبر نیست');
+        if (challenge.consumed_at) throw new BadRequestException('این کد تایید قبلا استفاده شده است');
+        if (challenge.expires_at < new Date()) throw new BadRequestException('کد تایید منقضی شده است');
 
         if (challenge.verification_attempts >= AUTH_CONSTANTS.OTP_VERIFY_MAX_ATTEMPTS) {
             throw new BadRequestException('تعداد تلاش‌های نامعتبر بیش از حد مجاز است');
@@ -178,12 +177,15 @@ export class AuthService {
                 challenge.consumed_at = new Date();
                 await this.otpChallengeRepository.save(challenge);
                 this.clearCookie(response, AUTH_CONSTANTS.COOKIE_NAMES.OTP_FLOW_TOKEN);
-                throw new BadRequestException('تعداد تلاش‌های نامعتبر بیش از حد مجاز است. لطفاً مجدداً کد درخواست کنید');
+                throw new BadRequestException(
+                    'تعداد تلاش‌های نامعتبر بیش از حد مجاز است. لطفاً مجدداً کد درخواست کنید',
+                );
             }
 
             await this.otpChallengeRepository.save(challenge);
             throw new BadRequestException(
-                `کد تایید نادرست است. ${AUTH_CONSTANTS.OTP_VERIFY_MAX_ATTEMPTS - challenge.verification_attempts} تلاش باقی مانده`,
+                `کد تایید نادرست است. ${AUTH_CONSTANTS.OTP_VERIFY_MAX_ATTEMPTS - challenge.verification_attempts
+                } تلاش باقی مانده`,
             );
         }
 
@@ -216,7 +218,12 @@ export class AuthService {
             identifierType: identifier.type,
         });
 
-        this.setCookie(response, AUTH_CONSTANTS.COOKIE_NAMES.REGISTER_FLOW_TOKEN, registerToken, AUTH_CONSTANTS.OTP_FLOW_TOKEN_EXPIRES_IN);
+        this.setCookie(
+            response,
+            AUTH_CONSTANTS.COOKIE_NAMES.REGISTER_FLOW_TOKEN,
+            registerToken,
+            AUTH_CONSTANTS.OTP_FLOW_TOKEN_EXPIRES_IN,
+        );
         this.clearCookie(response, AUTH_CONSTANTS.COOKIE_NAMES.OTP_FLOW_TOKEN);
 
         return {
@@ -258,14 +265,10 @@ export class AuthService {
         }
 
         const emailExists = await this.usersService.findByEmail(email);
-        if (emailExists) {
-            throw new ConflictException('این ایمیل قبلا ثبت شده است');
-        }
+        if (emailExists) throw new ConflictException('این ایمیل قبلا ثبت شده است');
 
         const phoneExists = await this.usersService.findByPhone(phone);
-        if (phoneExists) {
-            throw new ConflictException('این شماره تلفن قبلا ثبت شده است');
-        }
+        if (phoneExists) throw new ConflictException('این شماره تلفن قبلا ثبت شده است');
 
         const createdUser = await this.usersService.create({
             ...dto,
@@ -292,30 +295,29 @@ export class AuthService {
 
     async refresh(request: Request, response: Response) {
         const refreshToken = this.readCookie(request, AUTH_CONSTANTS.COOKIE_NAMES.REFRESH_TOKEN);
-        if (!refreshToken) {
-            throw new UnauthorizedException('رفرش توکن یافت نشد');
-        }
+        if (!refreshToken) throw new UnauthorizedException('رفرش توکن یافت نشد');
 
         const payload = await this.verifyRefreshToken(refreshToken);
         const session = await this.sessionRepository.findOne({
             where: { id: payload.sid } as any,
-            relations: ['user', 'user.roles'],
+            relations: ['user', 'user.roles', 'user.roles.permissions'],
         });
 
-        if (!session || session.revoked_at || session.expires_at < new Date()) {
+        if (!session || !session.user || session.revoked_at || session.expires_at < new Date()) {
             throw new UnauthorizedException('رفرش توکن معتبر نیست');
         }
 
         const tokenMatches = await bcrypt.compare(refreshToken, session.refresh_token_hash);
-        if (!tokenMatches) {
-            throw new UnauthorizedException('رفرش توکن معتبر نیست');
-        }
+        if (!tokenMatches) throw new UnauthorizedException('رفرش توکن معتبر نیست');
 
         const accessToken = await this.signAccessToken(session.user, session.id);
         const rotatedRefreshToken = await this.signRefreshToken(session.user, session.id);
+
         session.refresh_token_hash = await bcrypt.hash(rotatedRefreshToken, 10);
         session.last_used_at = new Date();
-        session.expires_at = new Date(Date.now() + this.tokenDurationToMs(AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRES_IN));
+        session.expires_at = new Date(
+            Date.now() + this.tokenDurationToMs(AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRES_IN),
+        );
         await this.sessionRepository.save(session);
 
         this.setAuthCookies(response, accessToken, rotatedRefreshToken);
@@ -341,7 +343,7 @@ export class AuthService {
                     await this.sessionRepository.save(session);
                 }
             } catch {
-
+                // no-op
             }
         }
 
@@ -355,6 +357,7 @@ export class AuthService {
 
     async session(request: Request, response: Response) {
         const accessToken = this.readAccessToken(request);
+
         if (accessToken) {
             try {
                 const payload = await this.verifyAccessToken(accessToken);
@@ -362,11 +365,14 @@ export class AuthService {
                     where: { id: payload.sub } as any,
                     relations: ['roles', 'roles.permissions'],
                 });
-                return {
-                    authenticated: true,
-                    message: 'کاربر وارد شده است',
-                    user: this.sanitizeUser(user),
-                };
+
+                if (user) {
+                    return {
+                        authenticated: true,
+                        message: 'کاربر وارد شده است',
+                        user: this.sanitizeUser(user),
+                    };
+                }
             } catch {
                 // no-op
             }
@@ -378,13 +384,20 @@ export class AuthService {
                 const payload = await this.verifyRefreshToken(refreshToken);
                 const session = await this.sessionRepository.findOne({
                     where: { id: payload.sid } as any,
-                    relations: ['user', 'user.roles'],
+                    relations: ['user', 'user.roles', 'user.roles.permissions'],
                 });
 
-                if (session && !session.revoked_at && session.expires_at > new Date()) {
+                if (session && session.user && !session.revoked_at && session.expires_at > new Date()) {
                     const user = session.user;
                     const newAccessToken = await this.signAccessToken(user, session.id);
-                    this.setCookie(response, AUTH_CONSTANTS.COOKIE_NAMES.ACCESS_TOKEN, newAccessToken, AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRES_IN);
+
+                    this.setCookie(
+                        response,
+                        AUTH_CONSTANTS.COOKIE_NAMES.ACCESS_TOKEN,
+                        newAccessToken,
+                        AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRES_IN,
+                    );
+
                     return {
                         authenticated: true,
                         message: 'کاربر وارد شده است',
@@ -423,7 +436,9 @@ export class AuthService {
         const refreshToken = await this.signRefreshToken(user, initialSession.id);
 
         initialSession.refresh_token_hash = await bcrypt.hash(refreshToken, 10);
-        initialSession.expires_at = new Date(Date.now() + this.tokenDurationToMs(AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRES_IN));
+        initialSession.expires_at = new Date(
+            Date.now() + this.tokenDurationToMs(AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRES_IN),
+        );
         await this.sessionRepository.save(initialSession);
 
         return { accessToken, refreshToken };
@@ -435,16 +450,18 @@ export class AuthService {
             : this.usersService.findByPhone(identifier);
     }
 
-    private sanitizeUser(user: UserEntity) {
+    private sanitizeUser(user: UserEntity | null | undefined) {
+        if (!user) return null;
+
         return {
             id: user.id,
             first_name: user.first_name,
             last_name: user.last_name,
             phone_number: user.phone_number,
             email: user.email,
-            roles: user.roles.map(role => ({
+            roles: (user.roles ?? []).map((role) => ({
                 name: role.name,
-                permissions: role.permissions.map(p => p.name),
+                permissions: (role.permissions ?? []).map((p) => p.name),
             })),
         };
     }
@@ -494,7 +511,7 @@ export class AuthService {
                 sub: user.id,
                 sid: sessionId,
                 email: user.email,
-                roles: (user.roles || []).map((role) => role.name),
+                roles: (user.roles ?? []).map((role) => role.name),
                 type: 'access',
             },
             {
@@ -587,11 +604,18 @@ export class AuthService {
 
     private async tryResolveSessionFromRequest(request: Request) {
         const accessToken = this.readAccessToken(request);
+
         if (accessToken) {
             try {
                 const payload = await this.verifyAccessToken(accessToken);
-                const user = await this.usersService.findById(payload.sub);
-                return { user: this.sanitizeUser(user), accessToken };
+                const user = await this.userRepository.findOne({
+                    where: { id: payload.sub } as any,
+                    relations: ['roles', 'roles.permissions'],
+                });
+
+                if (user) {
+                    return { user: this.sanitizeUser(user), accessToken };
+                }
             } catch {
                 // fallback
             }
@@ -604,10 +628,10 @@ export class AuthService {
             const payload = await this.verifyRefreshToken(refreshToken);
             const session = await this.sessionRepository.findOne({
                 where: { id: payload.sid } as any,
-                relations: ['user', 'user.roles'],
+                relations: ['user', 'user.roles', 'user.roles.permissions'],
             });
 
-            if (!session || session.revoked_at || session.expires_at < new Date()) return null;
+            if (!session || !session.user || session.revoked_at || session.expires_at < new Date()) return null;
             if (!(await bcrypt.compare(refreshToken, session.refresh_token_hash))) return null;
 
             const newAccessToken = await this.signAccessToken(session.user, session.id);
@@ -633,6 +657,7 @@ export class AuthService {
 
     private setCookie(response: Response, name: string, value: string, expiresIn: string): void {
         const maxAge = this.tokenDurationToMs(expiresIn);
+
         response.cookie(name, value, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -643,8 +668,18 @@ export class AuthService {
     }
 
     private setAuthCookies(response: Response, accessToken: string, refreshToken: string): void {
-        this.setCookie(response, AUTH_CONSTANTS.COOKIE_NAMES.ACCESS_TOKEN, accessToken, AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRES_IN);
-        this.setCookie(response, AUTH_CONSTANTS.COOKIE_NAMES.REFRESH_TOKEN, refreshToken, AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRES_IN);
+        this.setCookie(
+            response,
+            AUTH_CONSTANTS.COOKIE_NAMES.ACCESS_TOKEN,
+            accessToken,
+            AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRES_IN,
+        );
+        this.setCookie(
+            response,
+            AUTH_CONSTANTS.COOKIE_NAMES.REFRESH_TOKEN,
+            refreshToken,
+            AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRES_IN,
+        );
     }
 
     private clearCookie(response: Response, name: string): void {
@@ -670,7 +705,6 @@ export class AuthService {
         }
         return request.socket?.remoteAddress ?? 'unknown';
     }
-
 
     private tokenDurationToMs(duration: string): number {
         const match = duration.match(/^(\d+)([smhd])$/);

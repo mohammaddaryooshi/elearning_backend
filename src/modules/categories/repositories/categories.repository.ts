@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, In, Repository } from 'typeorm';
 
 import { CategoryEntity } from '@entities/category.entity';
 import { BaseRepository, FindAllOptions } from '@base/base.repository';
@@ -24,4 +24,16 @@ export class CategoriesRepository extends BaseRepository<CategoryEntity> {
             searchFields: ['name', 'slug', 'description'],
         });
     }
+
+    async findByIds(ids: number[]): Promise<CategoryEntity[]> {
+        if (!ids?.length) return [];
+
+        return this.categoryRepo.find({
+            where: { id: In(ids) },
+            // withDeleted: false // پیش‌فرض false
+        });
+    }
+
+
+
 }
