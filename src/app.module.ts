@@ -19,6 +19,7 @@ import { MailModule } from '@modules/mail/mail.module';
 import { SmsModule } from '@modules/sms/sms.module';
 import { PermissionsModule } from '@modules/permissions/permissions.module';
 import { ApiSuccessInterceptor } from './common/interceptors/api-success.interceptor';
+import { CourseCategoriesModule } from '@modules/courses/course-categories.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { ApiSuccessInterceptor } from './common/interceptors/api-success.interce
     UsersModule,
     CategoriesModule,
     PostsModule,
+    CourseCategoriesModule,
     CoursesModule,
     LessonsModule,
     EnrollmentsModule,
