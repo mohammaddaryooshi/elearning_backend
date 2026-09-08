@@ -10,6 +10,11 @@ import { LessonEntity } from '@entities/lesson.entity';
 import { CoursesController } from './controllers/courses.controller';
 import { CoursesService } from './services/courses.service';
 import { CoursesRepository } from './repositories/courses.repository';
+import { CourseCommentEntity } from '@entities/course-comment.entity';
+import { CourseCommentsController } from './controllers/course-comments.controller';
+import { CourseCommentsService } from './services/course-comments.service';
+import { CourseCommentsRepository } from './repositories/course-comments.repository';
+import { AuthModule } from '../../auth/auth.module';
 
 
 
@@ -22,16 +27,21 @@ import { CoursesRepository } from './repositories/courses.repository';
       EnrollmentEntity,
       CourseChapterEntity,
       LessonEntity,
+      CourseCommentEntity,
     ]),
+    AuthModule,
   ],
-  controllers: [CoursesController],
+  controllers: [CoursesController, CourseCommentsController,],
   providers: [
     CoursesService,
     CoursesRepository,
+    CourseCommentsService,
+    CourseCommentsRepository,
   ],
   exports: [
     CoursesService,
     CoursesRepository,
+    CourseCommentsService,
   ],
 })
 export class CoursesModule { }
