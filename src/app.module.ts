@@ -10,8 +10,6 @@ import { UsersModule } from './modules/users/users.module';
 import { PostsModule } from './modules/posts/posts.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CoursesModule } from './modules/courses/courses.module';
-import { LessonsModule } from './modules/lessons/lessons.module';
-import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { CartsModule } from './modules/carts/carts.module';
@@ -45,8 +43,6 @@ import { CourseCategoriesModule } from '@modules/courses/course-categories.modul
     PostsModule,
     CourseCategoriesModule,
     CoursesModule,
-    LessonsModule,
-    EnrollmentsModule,
     NotificationsModule,
     CartsModule,
     MailModule,
