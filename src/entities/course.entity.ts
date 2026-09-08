@@ -19,6 +19,7 @@ import { OrderItemEntity } from './order-item.entity';
 import { DiscountCodeEntity } from './discount-code.entity';
 import { EntityName } from '../enums/entity.enum';
 import { BaseEntity } from '@abstracts/base.entity';
+import { CourseStatus } from '@constants/app.constants';
 
 @Entity(EntityName.COURSE)
 @Index(['slug'])
@@ -34,6 +35,17 @@ export class CourseEntity extends BaseEntity {
 
     @Column({ type: 'longtext', nullable: true })
     description: string;
+
+    @Column({
+        type: 'enum',
+        enum: CourseStatus,
+        default: CourseStatus.DRAFT,
+    })
+    status: CourseStatus;
+
+    @Column({ type: 'datetime', nullable: true })
+    published_at: Date | null;
+
 
     @Column({ type: 'varchar', length: 500, nullable: true })
     thumbnail_image: string;

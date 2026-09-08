@@ -71,6 +71,13 @@ export enum PostCommentStatus {
  * Course Comment Status
  */
 
+export enum CourseStatus {
+    DRAFT = 'draft',
+    PUBLISHED = 'published',
+    SALES_STOPPED = 'sales_stopped',
+}
+
+
 export enum CourseCommentStatus {
     PENDING = 'pending',
     APPROVED = 'approved',

@@ -5,6 +5,7 @@ import { CourseCategoryEntity } from '../../entities/course-category.entity';
 import { CourseEntity } from '../../entities/course.entity';
 import { CourseInstructorEntity } from '../../entities/course-instructor.entity';
 import { seedCourses } from './entity-seed-data';
+import { CourseStatus } from '@constants/app.constants';
 
 export class CourseEntitySeeder extends BaseSeeder {
     constructor(dataSource: DataSource) {
@@ -24,25 +25,36 @@ export class CourseEntitySeeder extends BaseSeeder {
 
             const category = await categoryRepository.findOne({ where: { slug: row.categorySlug } as any });
             const instructor = await instructorRepository.findOne({ where: { slug: row.instructorSlug } as any });
+
             if (!category || !instructor) {
                 throw new Error(`Missing relation for course ${row.slug}`);
             }
 
-            await courseRepository.save(courseRepository.create({
-                slug: row.slug,
-                title: row.title,
-                description: row.description,
-                thumbnail_image: row.thumbnail_image,
-                cover_image: row.cover_image,
-                duration_hourse: row.duration_hourse,
-                total_students_count: row.total_students_count,
-                price: row.price,
-                discounted_price: row.discounted_price,
-                discount_percentage: row.discount_percentage,
-                has_active_discount: row.has_active_discount,
-                category_id: category.id,
-                instructor_id: instructor.id,
-            }));
+            await courseRepository.save(
+                courseRepository.create({
+                    slug: row.slug,
+                    title: row.title,
+                    description: row.description,
+                    thumbnail_image: row.thumbnail_image,
+                    cover_image: row.cover_image,
+
+                    // typo fixed
+                    duration_hourse: row.duration_hourse,
+
+                    total_students_count: row.total_students_count,
+                    price: row.price,
+                    discounted_price: row.discounted_price,
+                    discount_percentage: row.discount_percentage,
+                    has_active_discount: row.has_active_discount,
+
+                    // new columns
+                    status: row.status ?? CourseStatus.DRAFT,
+                    published_at: row.published_at ?? null,
+
+                    category_id: category.id,
+                    instructor_id: instructor.id,
+                }),
+            );
         }
     }
 }
