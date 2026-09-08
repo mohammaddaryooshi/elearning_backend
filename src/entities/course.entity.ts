@@ -7,7 +7,7 @@ import {
     JoinColumn,
     ForeignKey,
 } from 'typeorm';
-import { UserEntity } from './user.entity';
+
 import { LessonEntity } from './lesson.entity';
 import { EnrollmentEntity } from './enrollment.entity';
 import { CourseCategoryEntity } from './course-category.entity';
@@ -82,6 +82,7 @@ export class CourseEntity extends BaseEntity {
 
 
 
+
     @ManyToOne(() => CourseCategoryEntity, (category) => category.courses, {
         nullable: true,
         onDelete: 'SET NULL',
@@ -116,4 +117,30 @@ export class CourseEntity extends BaseEntity {
 
     @OneToMany(() => DiscountCodeEntity, (discountCode) => discountCode.course)
     discount_codes: DiscountCodeEntity[];
+
+    // SEO fields
+    @Column({ type: 'varchar', length: 70, nullable: true })
+    seo_title: string | null;
+
+    @Column({ type: 'varchar', length: 160, nullable: true })
+    seo_description: string | null;
+
+    @Column({ type: 'varchar', length: 500, nullable: true })
+    canonical_url: string | null;
+
+    @Column({ type: 'varchar', length: 70, nullable: true })
+    og_title: string | null;
+
+
+    @Column({ type: 'varchar', length: 300, nullable: true })
+    og_description: string | null;
+
+    @Column({ type: 'varchar', length: 500, nullable: true })
+    og_image: string | null;
+
+    @Column({ type: 'boolean', default: false })
+    no_index: boolean;
+
+    @Column({ type: 'boolean', default: false })
+    no_follow: boolean;
 }

@@ -111,7 +111,6 @@ export class CoursesRepository extends Repository<CourseEntity> {
       .leftJoinAndSelect('course.instructor', 'instructor')
       .leftJoinAndSelect('course.chapters', 'chapters')
       .leftJoinAndSelect('chapters.lessons', 'chapterLessons')
-      .leftJoinAndSelect('course.lessons', 'lessons')
       .where('course.id = :id', { id });
 
     if (withDeleted) {

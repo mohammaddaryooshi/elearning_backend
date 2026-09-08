@@ -53,6 +53,15 @@ export class CourseEntitySeeder extends BaseSeeder {
 
                     category_id: category.id,
                     instructor_id: instructor.id,
+                    // SEO fields
+                    seo_title: row.seo_title ?? null,
+                    seo_description: row.seo_description ?? null,
+                    canonical_url: row.canonical_url ?? null,
+                    og_title: row.og_title ?? null,
+                    og_description: row.og_description ?? null,
+                    og_image: row.og_image ?? null,
+                    no_index: row.no_index ?? false,
+                    no_follow: row.no_follow ?? false,
                 }),
             );
         }

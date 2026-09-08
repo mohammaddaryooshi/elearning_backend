@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  DefaultValuePipe,
   Delete,
   Get,
   Param,
@@ -13,6 +12,7 @@ import {
 
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -24,6 +24,8 @@ import { CoursesService } from '../services/courses.service';
 import { CoursePriceType, CourseQueryDto, CourseSort } from '../dto/course-query.dto';
 import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
+import { ResponseMessage } from '@decorators/response-message.decorator';
+import { CourseMessages } from '../constant/course.messages';
 
 @ApiTags('Admin Courses')
 @ApiBearerAuth()
@@ -35,53 +37,56 @@ export class CoursesController {
 
   @Get()
   @ApiOperation({
-    summary:
-      'لیست دوره‌ها با سرچ، فیلتر، مرتب‌سازی و pagination',
+    summary: 'List courses with search, filters, sorting, and pagination',
   })
   @ApiQuery({
     name: 'search',
     required: false,
-    description: 'جستجو بر اساس نام دوره یا نام مدرس',
+    description: 'Search by course title or instructor name',
   })
   @ApiQuery({
     name: 'status',
     required: false,
     enum: CourseStatus,
+    description: 'Filter by course status',
   })
   @ApiQuery({
     name: 'category_id',
     required: false,
-
-
-
     type: Number,
+    description: 'Filter by category ID',
   })
   @ApiQuery({
     name: 'instructor_id',
     required: false,
     type: Number,
+    description: 'Filter by instructor ID',
   })
   @ApiQuery({
     name: 'price_type',
     required: false,
     enum: CoursePriceType,
+    description: 'Filter by course price type',
   })
   @ApiQuery({
     name: 'sort',
     required: false,
     enum: CourseSort,
+    description: 'Sort order for course list',
   })
   @ApiQuery({
     name: 'page',
     required: false,
     type: Number,
     example: 1,
+    description: 'Page number',
   })
   @ApiQuery({
     name: 'limit',
     required: false,
     type: Number,
     example: 20,
+    description: 'Number of items per page',
   })
   async findAll(@Query() query: CourseQueryDto) {
     return this.coursesService.findAll(query);
@@ -89,11 +94,12 @@ export class CoursesController {
 
   @Get(':id')
   @ApiOperation({
-    summary: 'نمایش جزئیات یک دوره',
+    summary: 'Get course details',
   })
   @ApiParam({
     name: 'id',
     type: Number,
+    description: 'Course ID',
   })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
@@ -103,20 +109,25 @@ export class CoursesController {
 
   @Post()
   @ApiOperation({
-    summary: 'ایجاد دوره جدید',
+    summary: 'Create a new course',
   })
+  @ApiBody({ type: CreateCourseDto })
+  @ResponseMessage(CourseMessages.COURSE_CREATED)
   async create(@Body() dto: CreateCourseDto) {
     return this.coursesService.create(dto);
   }
 
   @Patch(':id')
   @ApiOperation({
-    summary: 'ویرایش دوره',
+    summary: 'Update course',
   })
   @ApiParam({
     name: 'id',
     type: Number,
+    description: 'Course ID',
   })
+  @ApiBody({ type: UpdateCourseDto })
+  @ResponseMessage(CourseMessages.COURSE_UPDATED)
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCourseDto,
@@ -126,30 +137,30 @@ export class CoursesController {
 
   @Delete(':id')
   @ApiOperation({
-    summary: 'حذف نرم دوره',
+    summary: 'Soft delete course',
   })
   @ApiParam({
     name: 'id',
     type: Number,
+    description: 'Course ID',
   })
+  @ResponseMessage(CourseMessages.COURSE_DELETED)
   async remove(
     @Param('id', ParseIntPipe) id: number,
   ) {
-    await this.coursesService.remove(id);
-
-    return {
-      message: 'دوره با موفقیت حذف شد.',
-    };
+    return await this.coursesService.remove(id);
   }
 
   @Patch(':id/restore')
   @ApiOperation({
-    summary: 'بازیابی دوره حذف‌شده',
+    summary: 'Restore deleted course',
   })
   @ApiParam({
     name: 'id',
     type: Number,
+    description: 'Course ID',
   })
+  @ResponseMessage(CourseMessages.COURSE_RESTORED)
   async restore(
     @Param('id', ParseIntPipe) id: number,
   ) {

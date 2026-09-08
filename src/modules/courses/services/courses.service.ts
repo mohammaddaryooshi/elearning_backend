@@ -92,6 +92,15 @@ export class CoursesService {
       published_at: publishedAt,
       category_id: dto.category_id,
       instructor_id: dto.instructor_id,
+      // SEO
+      seo_title: dto.seo_title ?? null,
+      seo_description: dto.seo_description ?? null,
+      canonical_url: dto.canonical_url ?? null,
+      og_title: dto.og_title ?? null,
+      og_description: dto.og_description ?? null,
+      og_image: dto.og_image ?? null,
+      no_index: dto.no_index ?? false,
+      no_follow: dto.no_follow ?? false,
     });
 
     return this.coursesRepository.save(course);
@@ -200,6 +209,16 @@ export class CoursesService {
     if (dto.published_at !== undefined) {
       course.published_at = dto.published_at;
     }
+
+    // SEO
+    if (dto.seo_title !== undefined) course.seo_title = dto.seo_title;
+    if (dto.seo_description !== undefined) course.seo_description = dto.seo_description;
+    if (dto.canonical_url !== undefined) course.canonical_url = dto.canonical_url;
+    if (dto.og_title !== undefined) course.og_title = dto.og_title;
+    if (dto.og_description !== undefined) course.og_description = dto.og_description;
+    if (dto.og_image !== undefined) course.og_image = dto.og_image;
+    if (dto.no_index !== undefined) course.no_index = dto.no_index;
+    if (dto.no_follow !== undefined) course.no_follow = dto.no_follow;
 
     return this.coursesRepository.save(course);
   }

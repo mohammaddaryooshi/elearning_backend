@@ -170,7 +170,7 @@ export const seedCourses = [
         description: 'ساخت API حرفه ای با NestJS، احراز هویت، کش و پرداخت.',
         thumbnail_image: '/images/courses/nest-thumb.jpg',
         cover_image: '/images/courses/nest-cover.jpg',
-        duration_hourse: 28, // was duration_hourse
+        duration_hourse: 28,
         total_students_count: 320,
         price: 1800000,
         discounted_price: 1450000,
@@ -180,6 +180,18 @@ export const seedCourses = [
         published_at: new Date('2026-01-10T08:00:00.000Z'),
         categorySlug: 'nestjs',
         instructorSlug: 'mehdi-farahi',
+
+        // SEO fields
+        seo_title: 'دوره NestJS از صفر تا پیشرفته | API حرفه‌ای',
+        seo_description:
+            'آموزش جامع NestJS از مقدماتی تا پیشرفته شامل احراز هویت، کش، پرداخت و معماری حرفه‌ای بک‌اند.',
+        canonical_url: 'https://example.com/courses/nestjs-az-sefr-ta-pishrafte',
+        og_title: 'NestJS از صفر تا پیشرفته',
+        og_description:
+            'یادگیری NestJS به‌صورت پروژه‌محور برای ساخت API مقیاس‌پذیر.',
+        og_image: '/images/courses/og/nestjs-og.jpg',
+        no_index: false,
+        no_follow: false,
     },
     {
         slug: 'sql-baraye-backend',
@@ -187,7 +199,7 @@ export const seedCourses = [
         description: 'از طراحی اسکیما تا کوئری نویسی پیشرفته.',
         thumbnail_image: '/images/courses/sql-thumb.jpg',
         cover_image: '/images/courses/sql-cover.jpg',
-        duration_hourse: 16, // was duration_hourse
+        duration_hourse: 16,
         total_students_count: 190,
         price: 1200000,
         discounted_price: null,
@@ -197,6 +209,17 @@ export const seedCourses = [
         published_at: null,
         categorySlug: 'barname-nevisi',
         instructorSlug: 'sara-amini',
+
+        // SEO fields
+        seo_title: 'آموزش SQL کاربردی برای بک‌اند',
+        seo_description:
+            'دوره SQL برای توسعه‌دهندگان بک‌اند؛ از طراحی دیتابیس تا کوئری‌نویسی بهینه.',
+        canonical_url: 'https://example.com/courses/sql-baraye-backend',
+        og_title: 'SQL کاربردی برای بک‌اند',
+        og_description: 'یادگیری SQL عملی برای پروژه‌های واقعی بک‌اند.',
+        og_image: '/images/courses/og/sql-og.jpg',
+        no_index: true, // چون draft هست می‌تونه true باشه
+        no_follow: false,
     },
 ];
 
