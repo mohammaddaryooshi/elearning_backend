@@ -15,6 +15,10 @@ import { CourseCommentsController } from './controllers/course-comments.controll
 import { CourseCommentsService } from './services/course-comments.service';
 import { CourseCommentsRepository } from './repositories/course-comments.repository';
 import { AuthModule } from '../../auth/auth.module';
+import { CourseInstructorsController } from './controllers/course-instructors.controller';
+import { CourseInstructorsService } from './services/course-instructors.service';
+import { CourseInstructorsRepository } from './repositories/course-instructors.repository';
+import { UserEntity } from '@entities/user.entity';
 
 
 
@@ -28,20 +32,25 @@ import { AuthModule } from '../../auth/auth.module';
       CourseChapterEntity,
       LessonEntity,
       CourseCommentEntity,
+      UserEntity
+
     ]),
     AuthModule,
   ],
-  controllers: [CoursesController, CourseCommentsController,],
+  controllers: [CoursesController, CourseCommentsController, CourseInstructorsController],
   providers: [
     CoursesService,
     CoursesRepository,
     CourseCommentsService,
     CourseCommentsRepository,
+    CourseInstructorsService,
+    CourseInstructorsRepository,
   ],
   exports: [
     CoursesService,
     CoursesRepository,
     CourseCommentsService,
+    CourseInstructorsService,
   ],
 })
 export class CoursesModule { }
