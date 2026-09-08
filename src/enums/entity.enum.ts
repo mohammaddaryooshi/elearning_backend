@@ -30,4 +30,6 @@ export enum EntityName {
     DISCOUNT_CODE_USAGE = 'discount_code_usages',
     NOTIFICATION = 'notifications',
     CONTACT_MESSAGE = 'contact_messages',
+    TICKETS = 'tickets',
+    TICKETS_MESSAGES = 'ticket_messages',
 }

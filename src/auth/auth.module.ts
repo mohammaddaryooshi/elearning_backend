@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../modules/users/users.module';
@@ -12,7 +12,7 @@ import { AUTH_CONSTANTS } from '@constants/app.constants';
 
 @Module({
     imports: [
-        UsersModule,
+        forwardRef(() => UsersModule),
         TypeOrmModule.forFeature([UserEntity, RoleEntity, AuthOtpChallengeEntity, AuthSessionEntity]),
         JwtModule.register({
             secret: process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET,

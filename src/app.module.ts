@@ -18,6 +18,7 @@ import { SmsModule } from '@modules/sms/sms.module';
 import { PermissionsModule } from '@modules/permissions/permissions.module';
 import { ApiSuccessInterceptor } from './common/interceptors/api-success.interceptor';
 import { CourseCategoriesModule } from '@modules/courses/course-categories.module';
+import { TicketsModule } from '@modules/tickets/tickets.module';
 
 @Module({
   imports: [
@@ -39,12 +40,13 @@ import { CourseCategoriesModule } from '@modules/courses/course-categories.modul
     RolesModule,
     PermissionsModule,
     UsersModule,
+    TicketsModule,
     CategoriesModule,
     PostsModule,
     CourseCategoriesModule,
     CoursesModule,
-    NotificationsModule,
     CartsModule,
+    NotificationsModule,
     MailModule,
     SmsModule,
   ],
