@@ -60,7 +60,6 @@ export class AuthService {
                 authenticated: true,
                 message: 'شما قبلا وارد شده‌اید',
                 user: existingSession.user,
-                accessToken: existingSession.accessToken,
             };
         }
 
@@ -134,7 +133,6 @@ export class AuthService {
         );
 
         return {
-            message: 'کد تایید با موفقیت ارسال شد',
             resend_after_seconds: AUTH_CONSTANTS.OTP_RESEND_COOLDOWN_SECONDS,
             identifier_type: identifier.type,
         };
@@ -205,10 +203,7 @@ export class AuthService {
 
             return {
                 authenticated: true,
-                message: 'ورود با موفقیت انجام شد',
                 user: this.sanitizeUser(user),
-                accessToken: session.accessToken,
-                refreshToken: session.refreshToken,
             };
         }
 
@@ -288,8 +283,6 @@ export class AuthService {
             authenticated: true,
             message: 'ثبت نام با موفقیت انجام شد',
             user: this.sanitizeUser(createdUser),
-            accessToken: session.accessToken,
-            refreshToken: session.refreshToken,
         };
     }
 
@@ -326,8 +319,6 @@ export class AuthService {
             authenticated: true,
             message: 'توکن با موفقیت تمدید شد',
             user: this.sanitizeUser(session.user),
-            accessToken,
-            refreshToken: rotatedRefreshToken,
         };
     }
 

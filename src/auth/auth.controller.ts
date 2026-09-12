@@ -7,6 +7,8 @@ import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { CompleteRegisterDto } from './dto/complete-register.dto';
 import { Public } from '@decorators/public.decorator';
 import { Request, Response } from 'express';
+import { ResponseMessage } from '@decorators/response-message.decorator';
+import { AUTH_MESSAGES } from './constants/auth.messages';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -14,6 +16,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
   @Public()
+  @ResponseMessage(AUTH_MESSAGES.OTP_SENT_SUCCESSFULLY)
   @Post('otp/request')
   @ApiOperation({ summary: 'Request a 6-digit OTP for login or registration' })
   async requestOtp(

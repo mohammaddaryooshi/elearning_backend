@@ -38,4 +38,7 @@ export const AUTH_MESSAGES = {
         IS_NOT_EMPTY: 'کد تایید نمی‌تواند خالی باشد',
         LENGTH: 'کد تایید باید دقیقاً ۶ رقم باشد',
     },
+    OTP_SENT_SUCCESSFULLY: "کد تایید برای شما ارسال شد",
+    LOGIN_SUCCESSFULLY: "شما با موفقیت وارد شدید",
+    REGISTER_SUCCESSFULLY: "ثبت نام شما با موفقیت انجام شد",
 }
