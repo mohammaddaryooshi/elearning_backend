@@ -19,6 +19,7 @@ import { PermissionsModule } from '@modules/permissions/permissions.module';
 import { ApiSuccessInterceptor } from './common/interceptors/api-success.interceptor';
 import { CourseCategoriesModule } from '@modules/courses/course-categories.module';
 import { TicketsModule } from '@modules/tickets/tickets.module';
+import { AdminUsersModule } from '@modules/users/admin.users.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { TicketsModule } from '@modules/tickets/tickets.module';
     ]),
     DatabaseModule,
     AuthModule,
+    AdminUsersModule,
     RolesModule,
     PermissionsModule,
     UsersModule,

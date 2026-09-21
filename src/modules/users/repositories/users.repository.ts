@@ -8,6 +8,7 @@ import { UserEntity } from '@entities/user.entity';
 import { RoleEntity } from '@entities/role.entity';
 import { UserListItemDto } from '../dto/user-list-item.dto';
 import { UsersQueryDto } from '../dto/users-query.dto';
+import { EnrollmentEntity } from '@entities/enrollment.entity';
 
 @Injectable()
 export class UsersRepository extends BaseRepository<UserEntity> {
@@ -43,6 +44,8 @@ export class UsersRepository extends BaseRepository<UserEntity> {
             .createQueryBuilder('user')
             .leftJoin('user.roles', 'role')
             .leftJoin('user.orders', 'order')
+            .leftJoin(EnrollmentEntity, 'enrollment', 'enrollment.user_id = user.id')
+            .leftJoin('enrollment.course', 'course')
             .where('user.deleted_at IS NULL');
 
 
@@ -74,16 +77,22 @@ export class UsersRepository extends BaseRepository<UserEntity> {
             .addSelect('user.last_name', 'last_name')
             .addSelect('user.email', 'email')
             .addSelect('user.phone_number', 'phone_number')
+            .addSelect('user.created_at', 'created_at')
             .addSelect('COUNT(DISTINCT `order`.`id`)', 'courses_count')
             .addSelect(
-                "GROUP_CONCAT(DISTINCT CONCAT(role.name, '::', COALESCE(role.description, '')) SEPARATOR '||')",
+                "GROUP_CONCAT(DISTINCT CONCAT(role.id, '::', role.name, '::', COALESCE(role.description, '')) SEPARATOR '||')",
                 'roles_meta',
+            )
+            .addSelect(
+                "GROUP_CONCAT(DISTINCT CONCAT(course.id, '::', COALESCE(course.title, ''), '::', COALESCE(enrollment.paid_price, ''), '::', COALESCE(enrollment.is_active, '')) SEPARATOR '||')",
+                'courses_meta',
             )
             .groupBy('user.id')
             .addGroupBy('user.first_name')
             .addGroupBy('user.last_name')
             .addGroupBy('user.email')
             .addGroupBy('user.phone_number')
+            .addGroupBy('user.created_at')
             .orderBy(orderField, sortOrder)
             .offset(skip)
             .limit(limit);
@@ -95,7 +104,9 @@ export class UsersRepository extends BaseRepository<UserEntity> {
             email: string;
             phone_number: string | null;
             courses_count: string;
+            created_at: Date;
             roles_meta: string | null;
+            courses_meta: string | null;
         }>();
 
 
@@ -132,13 +143,26 @@ export class UsersRepository extends BaseRepository<UserEntity> {
             last_name: row.last_name,
             email: row.email,
             phone_number: row.phone_number,
+            created_at: row.created_at,
             courses_count: Number(row.courses_count ?? 0),
             roles: row.roles_meta
                 ? row.roles_meta.split('||').map((item) => {
-                    const [name, description] = item.split('::');
+                    const [id, name, description] = item.split('::');
                     return {
+                        id: Number(id),
                         name: name ?? '',
                         description: description || null,
+                    };
+                })
+                : [],
+            courses: row.courses_meta
+                ? row.courses_meta.split('||').map((item) => {
+                    const [id, title, paid_price, is_active] = item.split('::');
+                    return {
+                        id: Number(id),
+                        title: title ?? '',
+                        paid_price: paid_price ? Number(paid_price) : null,
+                        is_active: is_active === '1' || is_active === 'true',
                     };
                 })
                 : [],

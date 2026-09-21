@@ -25,7 +25,7 @@ import {
     ApiQuery,
 } from '@nestjs/swagger';
 
-import { UsersService } from '../services/users.service';
+
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserEntity } from '@entities/user.entity';
@@ -34,13 +34,14 @@ import { UsersQueryDto } from '../dto/users-query.dto';
 import { UserListItemDto } from '../dto/user-list-item.dto';
 import { ResponseMessage } from '@decorators/response-message.decorator';
 import { USER_MESSAGES } from '../constants/user.messages';
+import { AdminUsersService } from '../services/admin.users.service';
 
-@ApiTags('Users')
+@ApiTags('Admin Users')
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({ description: 'Invalid or missing authentication token' })
-@Controller('users')
-export class UsersController {
-    constructor(private readonly usersService: UsersService) { }
+@Controller('admin/users')
+export class AdminUsersController {
+    constructor(private readonly adminUsersService: AdminUsersService) { }
 
     @Get()
     @ApiOperation({
@@ -54,7 +55,7 @@ export class UsersController {
     @ApiBadRequestResponse({ description: 'Invalid sort or query parameters' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error' })
     async findAll(@Query() query: UsersQueryDto): Promise<PaginatedResult<UserListItemDto>> {
-        return this.usersService.findAll(query);
+        return this.adminUsersService.findAll(query);
     }
 
     @Get(':id')
@@ -67,7 +68,7 @@ export class UsersController {
     @ApiNotFoundResponse({ description: 'User not found' })
     @ApiBadRequestResponse({ description: 'Invalid user ID' })
     async findOne(@Param('id', ParseIntPipe) id: number): Promise<UserEntity> {
-        return this.usersService.findOne(id);
+        return this.adminUsersService.findOne(id);
     }
 
     @Post()
@@ -80,7 +81,7 @@ export class UsersController {
     @ApiConflictResponse({ description: 'Email or phone number already exists' })
     @ResponseMessage(USER_MESSAGES.USER_CREATE_SUCCESSFULLY)
     async create(@Body() dto: CreateUserDto): Promise<UserEntity> {
-        return this.usersService.create(dto);
+        return this.adminUsersService.create(dto);
     }
 
     @Patch(':id')
@@ -95,7 +96,7 @@ export class UsersController {
     @ApiConflictResponse({ description: 'Email or phone number already exists' })
     @ResponseMessage(USER_MESSAGES.USER_UPDATE_SUCCESSFULLY)
     async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto): Promise<UserEntity> {
-        return this.usersService.update(id, dto);
+        return this.adminUsersService.update(id, dto);
     }
 
     @Delete(':id')
@@ -109,6 +110,6 @@ export class UsersController {
     @ApiBadRequestResponse({ description: 'Invalid user ID' })
     @ResponseMessage(USER_MESSAGES.USER_SOFT_DELETE_SUCCESSFULLY)
     async remove(@Param('id', ParseIntPipe) id: number): Promise<UserEntity> {
-        return this.usersService.remove(id);
+        return this.adminUsersService.remove(id);
     }
 }
