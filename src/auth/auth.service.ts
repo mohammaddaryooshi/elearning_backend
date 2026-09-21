@@ -28,6 +28,7 @@ import {
 import { BadRequestException } from '../common/exceptions/app.exception';
 import { MailService } from '@modules/mail/mail.service';
 import { FarazSmsService } from '@modules/sms/faraz-sms.service';
+import { AUTH_MESSAGES } from './constants/auth.messages';
 
 @Injectable()
 export class AuthService {
@@ -58,7 +59,7 @@ export class AuthService {
 
             return {
                 authenticated: true,
-                message: 'شما قبلا وارد شده‌اید',
+                message: AUTH_MESSAGES.LOGIN_RECENTLY,
                 user: existingSession.user,
             };
         }
@@ -81,7 +82,7 @@ export class AuthService {
             !lastChallenge.consumed_at &&
             new Date(lastChallenge.resend_available_at) > now
         ) {
-            throw new BadRequestException('برای درخواست مجدد کد باید ۲ دقیقه صبر کنید');
+            throw new BadRequestException(AUTH_MESSAGES.RETRY_AFTER_TWO_SECOND);
         }
 
         const otp = this.generateOtpCode();
@@ -115,7 +116,7 @@ export class AuthService {
                 `OTP delivery failed for identifier type=${identifier.type}: ${(err as Error).message}`,
             );
             await this.otpChallengeRepository.delete(challenge.id);
-            throw new ServiceUnavailableException('ارسال کد تایید با خطا مواجه شد. لطفاً دوباره تلاش کنید');
+            throw new ServiceUnavailableException(AUTH_MESSAGES.OTP_FAIL_SENDING);
         }
 
         const flowToken = await this.signFlowToken({
@@ -141,7 +142,7 @@ export class AuthService {
     async verifyOtp(dto: VerifyOtpDto, request: Request, response: Response) {
         const flowToken = this.readCookie(request, AUTH_CONSTANTS.COOKIE_NAMES.OTP_FLOW_TOKEN);
         if (!flowToken) {
-            throw new BadRequestException('ابتدا کد تایید را درخواست کنید');
+            throw new BadRequestException(AUTH_MESSAGES.VERIFY_OTP.NO_FLOW_TOKEN);
         }
 
         const flowPayload = await this.verifyFlowToken(flowToken);
@@ -151,20 +152,20 @@ export class AuthService {
             flowPayload.identifier !== identifier.value ||
             flowPayload.identifierType !== identifier.type
         ) {
-            throw new BadRequestException('اطلاعات وارد شده با درخواست کد تایید مطابقت ندارد');
+            throw new BadRequestException(AUTH_MESSAGES.VERIFY_OTP.IDENTIFIER_MISMATCH);
         }
 
         const challenge = await this.otpChallengeRepository.findOne({
             where: { id: flowPayload.challengeId } as any,
         });
 
-        if (!challenge) throw new BadRequestException('کد تایید معتبر نیست');
-        if (challenge.purpose !== flowPayload.purpose) throw new BadRequestException('نوع درخواست کد تایید معتبر نیست');
-        if (challenge.consumed_at) throw new BadRequestException('این کد تایید قبلا استفاده شده است');
-        if (challenge.expires_at < new Date()) throw new BadRequestException('کد تایید منقضی شده است');
+        if (!challenge) throw new BadRequestException(AUTH_MESSAGES.VERIFY_OTP.INVALID_CHALLENGE);
+        if (challenge.purpose !== flowPayload.purpose) throw new BadRequestException(AUTH_MESSAGES.VERIFY_OTP.INVALID_PURPOSE);
+        if (challenge.consumed_at) throw new BadRequestException(AUTH_MESSAGES.VERIFY_OTP.ALREADY_CONSUMED);
+        if (challenge.expires_at < new Date()) throw new BadRequestException(AUTH_MESSAGES.VERIFY_OTP.EXPIRED);
 
         if (challenge.verification_attempts >= AUTH_CONSTANTS.OTP_VERIFY_MAX_ATTEMPTS) {
-            throw new BadRequestException('تعداد تلاش‌های نامعتبر بیش از حد مجاز است');
+            throw new BadRequestException(AUTH_MESSAGES.VERIFY_OTP.MAX_ATTEMPTS_REACHED);
         }
 
         const isValid = await bcrypt.compare(dto.otp, challenge.code_hash);
@@ -175,15 +176,14 @@ export class AuthService {
                 challenge.consumed_at = new Date();
                 await this.otpChallengeRepository.save(challenge);
                 this.clearCookie(response, AUTH_CONSTANTS.COOKIE_NAMES.OTP_FLOW_TOKEN);
-                throw new BadRequestException(
-                    'تعداد تلاش‌های نامعتبر بیش از حد مجاز است. لطفاً مجدداً کد درخواست کنید',
-                );
+                throw new BadRequestException(AUTH_MESSAGES.VERIFY_OTP.MAX_ATTEMPTS_EXCEEDED);
             }
 
             await this.otpChallengeRepository.save(challenge);
             throw new BadRequestException(
-                `کد تایید نادرست است. ${AUTH_CONSTANTS.OTP_VERIFY_MAX_ATTEMPTS - challenge.verification_attempts
-                } تلاش باقی مانده`,
+                AUTH_MESSAGES.VERIFY_OTP.INVALID_OTP(
+                    AUTH_CONSTANTS.OTP_VERIFY_MAX_ATTEMPTS - challenge.verification_attempts,
+                ),
             );
         }
 
@@ -224,15 +224,16 @@ export class AuthService {
         return {
             authenticated: false,
             needsRegistration: true,
-            message: 'کد تایید شد. اکنون اطلاعات ثبت نام را تکمیل کنید.',
+            message: AUTH_MESSAGES.VERIFY_OTP.VERIFIED_NEEDS_REGISTRATION,
             redirectTo: process.env.AUTH_REGISTER_REDIRECT_URL || '/register',
         };
     }
 
+
     async completeRegister(dto: CompleteRegisterDto, request: Request, response: Response) {
         const registerToken = this.readCookie(request, AUTH_CONSTANTS.COOKIE_NAMES.REGISTER_FLOW_TOKEN);
         if (!registerToken) {
-            throw new BadRequestException('ابتدا شماره یا ایمیل را تایید کنید');
+            throw new BadRequestException(AUTH_MESSAGES.COMPLETE_REGISTER.NO_REGISTER_TOKEN);
         }
 
         const payload = await this.verifyRegisterToken(registerToken);
@@ -241,29 +242,29 @@ export class AuthService {
         });
 
         if (!challenge || !challenge.verified_at || challenge.consumed_at) {
-            throw new BadRequestException('تایید OTP معتبر نیست');
+            throw new BadRequestException(AUTH_MESSAGES.COMPLETE_REGISTER.INVALID_OTP_CHALLENGE);
         }
 
         if (challenge.purpose !== AuthOtpPurpose.REGISTER) {
-            throw new BadRequestException('این کد برای تکمیل ثبت نام معتبر نیست');
+            throw new BadRequestException(AUTH_MESSAGES.COMPLETE_REGISTER.INVALID_PURPOSE);
         }
 
         const email = dto.email.toLowerCase().trim();
         const phone = this.normalizePhone(dto.phone_number);
 
         if (payload.identifierType === AuthIdentifierType.EMAIL && email !== payload.identifier) {
-            throw new BadRequestException('ایمیل وارد شده باید همان ایمیل تایید شده باشد');
+            throw new BadRequestException(AUTH_MESSAGES.COMPLETE_REGISTER.EMAIL_MISMATCH);
         }
 
         if (payload.identifierType === AuthIdentifierType.PHONE && phone !== payload.identifier) {
-            throw new BadRequestException('شماره تلفن وارد شده باید همان شماره تایید شده باشد');
+            throw new BadRequestException(AUTH_MESSAGES.COMPLETE_REGISTER.PHONE_MISMATCH);
         }
 
         const emailExists = await this.usersService.findByEmail(email);
-        if (emailExists) throw new ConflictException('این ایمیل قبلا ثبت شده است');
+        if (emailExists) throw new ConflictException(AUTH_MESSAGES.COMPLETE_REGISTER.EMAIL_ALREADY_EXISTS);
 
         const phoneExists = await this.usersService.findByPhone(phone);
-        if (phoneExists) throw new ConflictException('این شماره تلفن قبلا ثبت شده است');
+        if (phoneExists) throw new ConflictException(AUTH_MESSAGES.COMPLETE_REGISTER.PHONE_ALREADY_EXISTS);
 
         const createdUser = await this.usersService.create({
             ...dto,
@@ -280,11 +281,10 @@ export class AuthService {
         this.clearCookie(response, AUTH_CONSTANTS.COOKIE_NAMES.REGISTER_FLOW_TOKEN);
 
         return {
-            authenticated: true,
-            message: 'ثبت نام با موفقیت انجام شد',
             user: this.sanitizeUser(createdUser),
         };
     }
+
 
     async refresh(request: Request, response: Response) {
         const refreshToken = this.readCookie(request, AUTH_CONSTANTS.COOKIE_NAMES.REFRESH_TOKEN);
@@ -297,11 +297,11 @@ export class AuthService {
         });
 
         if (!session || !session.user || session.revoked_at || session.expires_at < new Date()) {
-            throw new UnauthorizedException('رفرش توکن معتبر نیست');
+            throw new UnauthorizedException(AUTH_MESSAGES.REFRESH.INVALID_TOKEN);
         }
 
         const tokenMatches = await bcrypt.compare(refreshToken, session.refresh_token_hash);
-        if (!tokenMatches) throw new UnauthorizedException('رفرش توکن معتبر نیست');
+        if (!tokenMatches) throw new UnauthorizedException(AUTH_MESSAGES.REFRESH.INVALID_TOKEN);
 
         const accessToken = await this.signAccessToken(session.user, session.id);
         const rotatedRefreshToken = await this.signRefreshToken(session.user, session.id);
@@ -316,13 +316,11 @@ export class AuthService {
         this.setAuthCookies(response, accessToken, rotatedRefreshToken);
 
         return {
-            authenticated: true,
-            message: 'توکن با موفقیت تمدید شد',
             user: this.sanitizeUser(session.user),
         };
     }
 
-    async logout(request: Request, response: Response) {
+    async logout(request: Request, response: Response): Promise<void> {
         const refreshToken = this.readCookie(request, AUTH_CONSTANTS.COOKIE_NAMES.REFRESH_TOKEN);
 
         if (refreshToken) {
@@ -340,10 +338,6 @@ export class AuthService {
 
         this.clearAuthCookies(response);
 
-        return {
-            authenticated: false,
-            message: 'خروج با موفقیت انجام شد',
-        };
     }
 
     async session(request: Request, response: Response) {
@@ -360,7 +354,7 @@ export class AuthService {
                 if (user) {
                     return {
                         authenticated: true,
-                        message: 'کاربر وارد شده است',
+                        message: AUTH_MESSAGES.USER_IS_LOGIN,
                         user: this.sanitizeUser(user),
                     };
                 }
@@ -391,7 +385,7 @@ export class AuthService {
 
                     return {
                         authenticated: true,
-                        message: 'کاربر وارد شده است',
+                        message: AUTH_MESSAGES.USER_IS_LOGIN,
                         user: this.sanitizeUser(user),
                         accessToken: newAccessToken,
                     };
@@ -403,7 +397,7 @@ export class AuthService {
 
         return {
             authenticated: false,
-            message: 'کاربر وارد نشده است',
+            message: AUTH_MESSAGES.USER_DONT_LOGIN,
         };
     }
 

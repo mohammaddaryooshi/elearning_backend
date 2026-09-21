@@ -41,6 +41,7 @@ export class AuthController {
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Complete registration after OTP verification' })
+  @ResponseMessage(AUTH_MESSAGES.COMPLETE_REGISTER.SUCCESS)
   async completeRegister(
     @Body() body: CompleteRegisterDto,
     @Req() request: Request,
@@ -51,6 +52,7 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
+  @ResponseMessage(AUTH_MESSAGES.REFRESH.SUCCESS)
   @ApiOperation({ summary: 'Rotate refresh token and issue a fresh access token' })
   async refresh(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     return this.authService.refresh(request, response);
@@ -58,6 +60,7 @@ export class AuthController {
 
   @Public()
   @Post('logout')
+  @ResponseMessage(AUTH_MESSAGES.LOGOUT_SUCCESSFULLY)
   @ApiOperation({ summary: 'Logout and revoke the current refresh session' })
   async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     return this.authService.logout(request, response);
